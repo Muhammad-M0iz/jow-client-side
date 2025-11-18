@@ -1,5 +1,27 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Environment variables
+
+The following variables are used by the global search feature:
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `MEILISEARCH_HOST` | `http://localhost:7700` | URL of the Meilisearch instance. |
+| `MEILISEARCH_PUBLIC_KEY` | `""` | Public/search key used for querying. |
+| `MEILISEARCH_MASTER_KEY` | `""` | Required for auto-discovering indexes via `/indexes`. |
+
+Create a `.env.local` file to override the defaults:
+
+```bash
+MEILISEARCH_HOST=http://localhost:7700
+MEILISEARCH_PUBLIC_KEY=96fd72b1aa923921186cd66e6a56d4dfc7ffd532de70c9e34a42a119a9d6bfc8
+# MEILISEARCH_INDEXES=news-article,page,event
+```
+
+## Search page
+
+Visit `/search` to query every indexed document. The page uses the `/api/search` route, which proxies queries to Meilisearch and aggregates results across indexes. You can embed the shared `SearchInput` component (`app/components/common/Search.tsx`) anywhere to provide inline search fields.
+
 ## Getting Started
 
 First, run the development server:

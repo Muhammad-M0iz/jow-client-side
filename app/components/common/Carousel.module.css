@@ -1,0 +1,188 @@
+.carousel {
+  position: relative;
+  width: 100%;
+  height: 320px;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid rgba(139, 115, 85, 0.15);
+  background: #f9f7f3;
+}
+
+.inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 0.6s ease-in-out;
+}
+
+.slideActive {
+  opacity: 1;
+}
+
+.imageContainer {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.imagePlaceholder {
+  width: 100%;
+  height: 100%;
+  background-color: #f0ebe4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9c8670;
+  font-size: 2rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 0 1rem;
+}
+
+.caption {
+  position: absolute;
+  inset: auto 0 0;
+  padding: 1.5rem;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.55) 100%);
+  color: white;
+  pointer-events: none;
+}
+
+.caption h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.caption p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.control {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(139, 115, 85, 0.85);
+  color: white;
+  border: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.control:hover {
+  background-color: rgba(139, 115, 85, 1);
+}
+
+.control:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+
+.controlPrev {
+  left: 1rem;
+}
+
+.controlNext {
+  right: 1rem;
+}
+
+.controlPrevRtl {
+  right: 1rem;
+  left: auto;
+}
+
+.controlNextRtl {
+  left: 1rem;
+  right: auto;
+}
+
+.indicators {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.45rem;
+  z-index: 10;
+}
+
+.indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: none;
+  background-color: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.indicatorActive {
+  background-color: white;
+}
+
+.emptyState {
+  width: 100%;
+  padding: 2rem;
+  text-align: center;
+  border: 1px dashed rgba(139, 115, 85, 0.4);
+  border-radius: 10px;
+  color: #8B7355;
+  background: rgba(139, 115, 85, 0.05);
+}
+
+.rtl {
+  direction: rtl;
+}
+
+.ltr {
+  direction: ltr;
+}
+
+@media (max-width: 768px) {
+  .carousel {
+    height: 240px;
+  }
+
+  .control {
+    width: 36px;
+    height: 36px;
+    font-size: 1.2rem;
+  }
+
+  .caption {
+    padding: 1rem;
+  }
+
+  .caption h2 {
+    font-size: 1.1rem;
+  }
+
+  .caption p {
+    font-size: 0.85rem;
+  }
+}

@@ -1,0 +1,40 @@
+.search-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.search-card {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  background-color: #fff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  height: 100%;
+}
+
+.search-card-link:hover .search-card,
+.search-card-link:focus-visible .search-card {
+  border-color: #8b7355;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.search-card-index {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.5);
+  margin: 0;
+}
+
+.search-card-title {
+  margin: 0.1rem 0 0.5rem;
+  color: #2c2c2c;
+  font-size: 1.1rem;
+}
+
+.search-card-snippet {
+  margin: 0;
+  color: rgba(0, 0, 0, 0.7);
+  line-height: 1.4;
+}
