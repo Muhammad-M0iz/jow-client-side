@@ -31,22 +31,25 @@ export default async function RootLayout({
   params,
 }: {
   children: ReactNode;
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }) {
+  const resolvedParams = await params;
+  const locale = resolvedParams.locale;
+
   const [menuItems, footerData] = await Promise.all([
-    getNavigation(params.locale),
-    getFooter(params.locale),
+    getNavigation(locale),
+    getFooter(locale),
   ]);
 
   return (
-    <html lang={params.locale} dir={params.locale === 'ur' ? 'rtl' : 'ltr'}>
+    <html lang={locale} dir={locale === 'ur' ? 'rtl' : 'ltr'}>
       <body className="bg-white text-black">
         
         <Header menuItems={menuItems} />
         
         <main>{children}</main>
         
-        <Footer data={footerData} locale={params.locale} />
+        <Footer data={footerData} locale={locale} />
         
       </body>
     </html>
