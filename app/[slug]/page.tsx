@@ -4,14 +4,9 @@ import ContentPage from '../components/page/ContentPage';
 import { getServerLocale } from '../lib/get-locale';
 import { mapContentPage, buildContentPageMetadata } from '../lib/mappers/page-mappers';
 import { fetchPageEntry } from '../services/content-service';
-import {
-  DEFAULT_REVALIDATE,
-  fallbackLocale,
-  normalizeLocale,
-  type LocaleKey,
-} from '../lib/strapi-utils';
+import { fallbackLocale, normalizeLocale, type LocaleKey } from '../lib/strapi-utils';
 
-export const revalidate = DEFAULT_REVALIDATE;
+export const revalidate = 300;
 
 type PageProps = {
   params: Promise<{ slug: string }>;

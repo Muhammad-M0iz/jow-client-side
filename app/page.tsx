@@ -7,7 +7,6 @@ import FeaturedNews from './components/common/FeaturedNews';
 import './HomePage.css';
 import { getServerLocale } from './lib/get-locale';
 import {
-  DEFAULT_REVALIDATE,
   fallbackLocale,
   normalizeLocale,
   resolveDirection,
@@ -85,7 +84,7 @@ const copy: Record<LocaleKey, Record<string, string>> = {
   },
 };
 
-export const revalidate = DEFAULT_REVALIDATE;
+export const revalidate = 300;
 const renderRichText = (content?: BlocksContent | null) => {
   if (!content || !Array.isArray(content) || content.length === 0) return null;
   return <BlocksRenderer content={content} />;
