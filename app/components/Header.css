@@ -1,3 +1,5 @@
+/* Header.css - Fixed Fly-out Menus */
+
 .header {
   background-color: white;
   position: sticky;
@@ -5,6 +7,14 @@
   z-index: 1000;
   transition: box-shadow 0.3s ease;
   will-change: transform;
+}
+
+/* Container Fix */
+.header .container {
+  max-width: 1450px;
+  width: 92%;
+  margin: 0 auto;
+  padding: 0;
 }
 
 .header.scrolled .top-bar {
@@ -34,9 +44,17 @@
 
 .top-bar-content {
   display: flex;
-  justify-content: flex-end;
   align-items: center;
-  
+}
+
+/* RTL: align to right */
+[dir="rtl"] .top-bar-content {
+  justify-content: flex-end;
+}
+
+/* LTR: align to left */
+[dir="ltr"] .top-bar-content {
+  justify-content: flex-start;
 }
 
 .contact-info {
@@ -98,12 +116,14 @@
   backface-visibility: hidden;
 }
 
+/* Layout Grid Fix */
 .nav-container {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  justify-content: flex-start;
-  
+  gap: 1rem;
   padding: 0.75rem 0;
+  width: 100%;
 }
 
 /* Logo Section */
@@ -112,7 +132,7 @@
   align-items: center;
   gap: 1rem;
   text-decoration: none;
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 0;
   order: -1;
 }
 
@@ -156,15 +176,14 @@
   color: #6d5a42;
 }
 
-/* Navigation List */
+/* Nav List Flex Fix */
 .nav-list {
   list-style: none;
   display: flex;
+  justify-content: center;
+  width: 100%;
   padding: 0;
   margin: 0;
-  flex: 1;
-  justify-content: center;
-  
 }
 
 .nav-item {
@@ -184,11 +203,11 @@
   border-radius: 6px;
 }
 
-/* Dropdown indicator for main nav items */
+/* Dropdown indicator using logical properties */
 .nav-item.has-dropdown > .nav-link .nav-title::after {
   content: '▼';
   font-size: 0.7rem;
-  margin-right: 0.5rem;
+  margin-inline-start: 0.5rem;
   display: inline-block;
   transition: transform 0.3s ease;
   color: inherit;
@@ -198,6 +217,7 @@
   transform: rotate(180deg);
 }
 
+/* Underline animation */
 .nav-link::after {
   content: '';
   position: absolute;
@@ -208,7 +228,7 @@
   background: linear-gradient(90deg, #8B7355 0%, #6d5a42 100%);
   transform: scaleX(0);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  transform-origin: right;
+  transform-origin: center;
 }
 
 .nav-link:hover {
@@ -229,29 +249,28 @@
   font-size: 1rem;
 }
 
-
-
-/* Dropdown Menu */
+/* Dropdown Menu - uses logical properties for RTL/LTR */
 .dropdown-menu {
   position: absolute;
   top: 100%;
-  right: 0;
+  inset-inline-start: 0;
   background-color: white;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   list-style: none;
-  min-width: 280px;
+  min-width: 260px;
   opacity: 0;
   visibility: hidden;
   transform: translateY(-15px);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1000;
-  
   border-radius: 8px;
   border: 1px solid rgba(139, 115, 85, 0.1);
-  overflow: visible;
-  backdrop-filter: blur(10px);
-  padding-top: 0;
-  margin-top: 0;
+  
+  /* --- CRITICAL FIX: Changed from hidden to visible --- */
+  /* This allows submenus to 'fly out' outside the box */
+  overflow: visible; 
+  
+  padding: 0.5rem 0;
 }
 
 .dropdown-menu::before {
@@ -268,18 +287,6 @@
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
-  animation: dropdownSlide 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes dropdownSlide {
-  0% {
-    opacity: 0;
-    transform: translateY(-15px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .dropdown-item {
@@ -297,7 +304,7 @@
 
 .dropdown-link {
   display: block;
-  padding: 0.9rem 1.25rem;
+  padding: 0.85rem 1.25rem;
   color: #333;
   text-decoration: none;
   transition: all 0.3s ease;
@@ -305,7 +312,8 @@
   font-weight: 500;
 }
 
-.dropdown-link::before {
+/* Hover line indicator - RTL (right side) */
+[dir="rtl"] .dropdown-link::before {
   content: '';
   position: absolute;
   right: 0;
@@ -317,37 +325,69 @@
   transition: height 0.3s ease;
 }
 
-.dropdown-link:hover {
+[dir="rtl"] .dropdown-link:hover {
   color: #8B7355;
   padding-right: 1.5rem;
 }
 
-.dropdown-link:hover::before {
+[dir="rtl"] .dropdown-link:hover::before {
   height: 60%;
 }
 
+/* Hover line indicator - LTR (left side) */
+[dir="ltr"] .dropdown-link::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 0;
+  background: linear-gradient(180deg, #8B7355 0%, #6d5a42 100%);
+  transition: height 0.3s ease;
+}
 
+[dir="ltr"] .dropdown-link:hover {
+  color: #8B7355;
+  padding-left: 1.5rem;
+}
 
-/* Submenu */
+[dir="ltr"] .dropdown-link:hover::before {
+  height: 60%;
+}
+
+/* Submenu - uses logical properties */
 .submenu {
   position: absolute;
-  left: 100%;
-  top: -1px;
+  
+  /* Positions it next to the parent item, not inside */
+  inset-inline-start: 100%; 
+  top: -0.5rem; 
+  
   background-color: white;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   list-style: none;
-  min-width: 280px;
+  min-width: 240px;
   opacity: 0;
   visibility: hidden;
-  transform: translateX(15px);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  
   border-radius: 8px;
   border: 1px solid rgba(139, 115, 85, 0.1);
-  overflow: visible;
-  backdrop-filter: blur(10px);
   z-index: 1002;
-  margin-right: 0;
+  padding: 0.5rem 0;
+  
+  /* Ensures submenu items don't get clipped */
+  overflow: visible; 
+}
+
+/* RTL submenu slides from right */
+[dir="rtl"] .submenu {
+  transform: translateX(15px);
+}
+
+/* LTR submenu slides from left */
+[dir="ltr"] .submenu {
+  transform: translateX(-15px);
 }
 
 .submenu::before {
@@ -364,18 +404,35 @@
   position: relative;
 }
 
-.dropdown-item.has-submenu > .dropdown-link::after {
-  content: '▶';
+/* Submenu indicator - RTL (left arrow) */
+[dir="rtl"] .dropdown-item.has-submenu > .dropdown-link::after {
+  content: '◄';
   position: absolute;
-  right: 1rem;
+  left: 1rem;
   top: 50%;
-  transform: translateY(50%);
+  transform: translateY(-50%);
   font-size: 0.8rem;
   color: #8B7355;
   transition: all 0.3s ease;
 }
 
-.dropdown-item.has-submenu:hover > .dropdown-link::after {
+[dir="rtl"] .dropdown-item.has-submenu:hover > .dropdown-link::after {
+  left: 0.75rem;
+}
+
+/* Submenu indicator - LTR (right arrow) */
+[dir="ltr"] .dropdown-item.has-submenu > .dropdown-link::after {
+  content: '►';
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.8rem;
+  color: #8B7355;
+  transition: all 0.3s ease;
+}
+
+[dir="ltr"] .dropdown-item.has-submenu:hover > .dropdown-link::after {
   right: 0.75rem;
 }
 
@@ -388,19 +445,7 @@
   opacity: 1;
   visibility: visible;
   transform: translateX(0);
-  animation: submenuSlide 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1002;
-}
-
-@keyframes submenuSlide {
-  0% {
-    opacity: 0;
-    transform: translateX(15px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateX(0);
-  }
 }
 
 .submenu-item {
@@ -418,15 +463,17 @@
 
 .submenu-link {
   display: block;
-  padding: 0.9rem 1.25rem;
+  padding: 0.85rem 1.25rem;
   color: #333;
   text-decoration: none;
   transition: all 0.3s ease;
+  font-size: 0.95rem;
   position: relative;
   font-weight: 500;
 }
 
-.submenu-link::before {
+/* Submenu hover line - RTL (right side) */
+[dir="rtl"] .submenu-link::before {
   content: '';
   position: absolute;
   right: 0;
@@ -438,12 +485,36 @@
   transition: height 0.3s ease;
 }
 
-.submenu-link:hover {
+[dir="rtl"] .submenu-link:hover {
   color: #8B7355;
+  background-color: rgba(139, 115, 85, 0.04);
   padding-right: 1.5rem;
 }
 
-.submenu-link:hover::before {
+[dir="rtl"] .submenu-link:hover::before {
+  height: 60%;
+}
+
+/* Submenu hover line - LTR (left side) */
+[dir="ltr"] .submenu-link::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 0;
+  background: linear-gradient(180deg, #6d5a42 0%, #8B7355 100%);
+  transition: height 0.3s ease;
+}
+
+[dir="ltr"] .submenu-link:hover {
+  color: #8B7355;
+  background-color: rgba(139, 115, 85, 0.04);
+  padding-left: 1.5rem;
+}
+
+[dir="ltr"] .submenu-link:hover::before {
   height: 60%;
 }
 
@@ -451,7 +522,7 @@
 .header-actions {
   display: flex;
   gap: 0.75rem;
-  padding: 0 1rem;
+  padding: 0;
   direction: ltr;
 }
 
@@ -515,40 +586,42 @@
 
 /* Responsive Design */
 @media (max-width: 1200px) {
-  .nav-list {
-    justify-content: flex-start;
-  }
-
   .nav-link {
-    padding: 1rem 0.75rem;
+    padding: 0.75rem 0.5rem;
     font-size: 0.9rem;
   }
 }
 
 @media (max-width: 968px) {
   .nav-container {
+    display: flex;
     flex-direction: column;
     align-items: stretch;
+    gap: 1rem;
   }
 
   .logo-section {
     justify-content: center;
-    padding: 1rem;
+    padding: 0.5rem;
   }
 
   .nav-list {
     flex-direction: column;
     width: 100%;
+    justify-content: flex-start;
   }
 
   .nav-item {
     width: 100%;
+    text-align: center;
   }
 
   .nav-link {
     padding: 1rem;
+    border-radius: 0;
   }
 
+  /* Mobile Dropdowns */
   .dropdown-menu {
     position: static;
     opacity: 1;
@@ -556,16 +629,22 @@
     transform: none;
     box-shadow: none;
     display: none;
-    background-color: #0d3a6a;
+    background-color: #f9f9f9;
+    
+    /* Reset overflow for mobile so items are contained inside */
+    overflow: hidden;
+  }
+
+  [dir="rtl"] .dropdown-menu {
+    padding-right: 1rem;
+  }
+
+  [dir="ltr"] .dropdown-menu {
+    padding-left: 1rem;
   }
 
   .nav-item.active .dropdown-menu {
     display: block;
-  }
-
-  .dropdown-link {
-    color: white;
-    padding-right: 2rem;
   }
 
   .submenu {
@@ -575,38 +654,25 @@
     transform: none;
     box-shadow: none;
     display: none;
-    background-color: #08264d;
+    background-color: #f0f0f0;
   }
 
   .dropdown-item.has-submenu:hover .submenu {
     display: block;
   }
 
-  .submenu-link {
-    color: white;
-    padding-right: 3rem;
-  }
-
   .header-actions {
     justify-content: center;
-    padding: 1rem;
-  }
-}
-
-@media (max-width: 968px) {
-  .top-bar-content {
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-
-  .contact-info {
-    flex-direction: column;
-    gap: 0.5rem;
-    text-align: center;
+    padding: 1rem 0;
   }
 }
 
 @media (max-width: 768px) {
+  .header .container {
+    width: 100%;
+    padding: 0 1rem;
+  }
+
   .logo {
     width: 40px;
     height: 40px;
@@ -618,6 +684,17 @@
 
   .top-bar {
     padding: 0.5rem 0;
+  }
+
+  .top-bar-content {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .contact-info {
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
   }
 
   .contact-item {

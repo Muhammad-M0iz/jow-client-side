@@ -1,0 +1,35 @@
+.testimonials-section {
+  margin: 2.5rem 0;
+}
+
+.testimonials-section__title {
+  font-size: 1.6rem;
+  color: #8b7355;
+  margin-bottom: 1.5rem;
+  text-align: start;
+}
+
+.testimonial-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.testimonial-card__image img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+}
+
+.testimonial-card__body {
+  font-size: 1rem;
+  color: #333;
+  line-height: 1.7;
+  margin-top: 0.75rem;
+  text-align: start;
+}
+
+@media (max-width: 640px) {
+  .testimonials-section__title {
+    font-size: 1.4rem;
+  }
+}

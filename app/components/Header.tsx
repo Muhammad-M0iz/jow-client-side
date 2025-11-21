@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import './Header.css';
+import { useLanguage } from '../context/LanguageContext';
 
 export interface MenuItem {
   id: number;
@@ -15,7 +16,9 @@ export interface MenuItem {
 
 const CTA_TITLES = new Set(['Admissions', 'Search']);
 const CTA_EXCLUDED_FROM_NAV = new Set(['Search']);
-const NAV_PRIMARY_LIMIT = 6;
+
+// Removed static constant NAV_PRIMARY_LIMIT from here
+
 const FALLBACK_CTAS: MenuItem[] = [
   { id: -1, title: 'Search', order: 0, url: '/search', children: [] },
   { id: -2, title: 'Admissions', order: 1, url: '/admissions', children: [] },
@@ -30,6 +33,16 @@ export function Header({ menuItems, fetchError }: { menuItems: MenuItem[]; fetch
   const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
   const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const { locale, switchLanguage } = useLanguage();
+
+  // --- FIX: Dynamic Limit based on Locale ---
+  // English gets 5 items to prevent overflow, Urdu gets 6
+  const navPrimaryLimit = locale === 'en' ? 5 : 6;
+
+  const toggleLanguage = () => {
+    const newLang = locale === 'en' ? 'ur' : 'en';
+    switchLanguage(newLang);
+  };
 
   useEffect(() => {
     let ticking = false;
@@ -67,7 +80,8 @@ export function Header({ menuItems, fetchError }: { menuItems: MenuItem[]; fetch
     const overflow: MenuItem[] = [];
 
     navigable.forEach((item) => {
-      const prefersPrimary = item.showInNav !== false && prioritized.length < NAV_PRIMARY_LIMIT;
+      // Use dynamic navPrimaryLimit here
+      const prefersPrimary = item.showInNav !== false && prioritized.length < navPrimaryLimit;
       if (prefersPrimary) {
         prioritized.push(item);
       } else {
@@ -80,7 +94,7 @@ export function Header({ menuItems, fetchError }: { menuItems: MenuItem[]; fetch
       mainNavItems: prioritized,
       overflowNavItems: overflow,
     };
-  }, [menuItems]);
+  }, [menuItems, navPrimaryLimit]); // Added navPrimaryLimit to dependencies
 
   const hasMenuItems = mainNavItems.length > 0 || overflowNavItems.length > 0;
 
@@ -164,7 +178,7 @@ export function Header({ menuItems, fetchError }: { menuItems: MenuItem[]; fetch
         onMouseLeave={() => setMoreDropdownOpen(false)}
       >
         <span className="nav-link">
-          <span className="nav-title">More</span>
+          <span className="nav-title">{locale === 'en' ? 'More' : 'مزید'}</span>
         </span>
         {renderDropdownMenu(overflowNavItems)}
       </li>
@@ -178,6 +192,14 @@ export function Header({ menuItems, fetchError }: { menuItems: MenuItem[]; fetch
       <div className="top-bar">
         <div className="container">
           <div className="top-bar-content">
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+               <button 
+                 onClick={toggleLanguage}
+                 className="text-white text-sm font-bold px-3 py-1 border border-white/30 rounded hover:bg-white/10 transition"
+               >
+                 {locale === 'en' ? 'اردو' : 'English'}
+               </button>
+            </div>
             <div className="contact-info">
               <a href="tel:+923001234567" className="contact-item">
                 <span className="contact-icon">📞</span>

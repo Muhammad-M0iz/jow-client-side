@@ -1,0 +1,111 @@
+.video-section {
+  margin: 2rem 0;
+}
+
+.video-section__title {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: #8b7355;
+  text-align: start;
+}
+
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.video-card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.video-card__player {
+  position: relative;
+  padding-top: 56.25%;
+}
+
+.video-card__player > div {
+  position: absolute !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.video-card__player .react-player__preview {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(19, 27, 34, 0.9), rgba(34, 20, 10, 0.8));
+  color: #fff;
+  cursor: pointer;
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+.video-card__player .react-player__preview::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, rgba(0, 0, 0, 0.5) 60%);
+  pointer-events: none;
+}
+
+.video-card__play-button {
+  position: relative;
+  z-index: 1;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  color: #8b7355;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 600;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.video-card__player .react-player__preview:hover .video-card__play-button {
+  transform: scale(1.05);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.28);
+}
+
+.video-card__body {
+  padding: 1rem 1.25rem 1.5rem;
+  text-align: start;
+}
+
+.video-card__title {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.video-card__description {
+  margin: 0;
+  color: #555;
+  line-height: 1.6;
+}
+
+.video-card__body--empty {
+  padding-bottom: 1rem;
+}
+
+@media (max-width: 600px) {
+  .video-card__body {
+    padding: 0.85rem 1rem 1.25rem;
+  }
+}

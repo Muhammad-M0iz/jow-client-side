@@ -2,6 +2,20 @@ import Link from 'next/link';
 import { type BlocksContent } from '@strapi/blocks-react-renderer';
 import GetInTouch from './GetInTouch';
 import RichTextArticle from './RichTextArticle';
+import FacultyWidget, { type FacultyMember } from './FacultyWidget';
+import FeaturedNews, {
+  type FeaturedNewsCard,
+  type AnnouncementLinkItem as FeaturedNewsAnnouncementLink,
+} from '../common/FeaturedNews';
+import NewsDetailSection, { type NewsDetailArticle } from './NewsDetailSection';
+import VideoSection, { type VideoSectionData } from './VideoSection';
+import PhotoAlbumSection, { type PhotoAlbumSectionData } from './PhotoAlbumSection';
+import DownloadSection, { type DownloadSectionData } from './DownloadSection';
+import TestimonialsSection, { type TestimonialsSectionData } from './TestimonialsSection';
+import FormSection, { type FormSectionData } from './FormSection';
+import EventsCalendarSection from './EventsCalendarSection';
+import EventDetailSection from './EventDetailSection';
+import type { EventsCalendarData, EventListItem } from './EventTypes';
 import './ContentPage.css';
 
 const rtlLocales = ['ur', 'ar', 'fa'];
@@ -13,6 +27,14 @@ const copy: Record<LocaleKey, {
   noContent: string;
   importantLinksTitle: string;
   quickLinksTitle: string;
+  newsTitle: string;
+  announcementsTitle: string;
+  newsLinkLabel: string;
+  announcementLinkLabel: string;
+  noAnnouncements: string;
+  eventsCalendarTitle: string;
+  eventsListTitle: string;
+  noEvents: string;
 }> = {
   en: {
     childPagesTitle: 'More from this section',
@@ -20,6 +42,14 @@ const copy: Record<LocaleKey, {
     noContent: 'Content will be available soon.',
     importantLinksTitle: 'Important Links',
     quickLinksTitle: 'Quick Links',
+    newsTitle: 'News',
+    announcementsTitle: 'Announcements',
+    newsLinkLabel: 'Read more',
+    announcementLinkLabel: 'View details',
+    noAnnouncements: 'Nothing to share right now.',
+    eventsCalendarTitle: 'Events Calendar',
+    eventsListTitle: 'Events',
+    noEvents: 'No events scheduled yet.',
   },
   ur: {
     childPagesTitle: 'مزید صفحات',
@@ -27,6 +57,14 @@ const copy: Record<LocaleKey, {
     noContent: 'مواد جلد دستیاب ہوگا۔',
     importantLinksTitle: 'اہم روابط',
     quickLinksTitle: 'فوری روابط',
+    newsTitle: 'خبریں',
+    announcementsTitle: 'اعلانات',
+    newsLinkLabel: 'مزید پڑھیں',
+    announcementLinkLabel: 'تفصیل دیکھیں',
+    noAnnouncements: 'اس وقت کوئی اعلان نہیں۔',
+    eventsCalendarTitle: 'تقریبات کا کیلنڈر',
+    eventsListTitle: 'آنے والی تقریبات',
+    noEvents: 'فی الحال کوئی تقریب موجود نہیں۔',
   },
 };
 
@@ -57,6 +95,8 @@ export type ChildPageSummary = {
   title?: string | null;
   slug?: string | null;
   description?: string | null;
+  href?: string | null;
+  isExternal?: boolean | null;
 };
 
 export type ImportantLinkItem = {
@@ -73,6 +113,33 @@ export type QuickLinkItem = {
   isExternal?: boolean | null;
 };
 
+export type EventDetailSectionData = {
+  title?: string | null;
+  events: EventListItem[];
+};
+
+export type FacultyWidgetData = {
+  title?: string | null;
+  subtitle?: string | null;
+  members?: FacultyMember[];
+};
+
+export type FeaturedNewsWidgetData = {
+  newsTitle?: string | null;
+  announcementsTitle?: string | null;
+  fallbackTitle?: string | null;
+  newsLinkLabel?: string | null;
+  announcementLinkLabel?: string | null;
+  emptyAnnouncementsCopy?: string | null;
+  featuredNews?: FeaturedNewsCard[];
+  announcementLinks?: FeaturedNewsAnnouncementLink[];
+};
+
+export type NewsDetailSectionData = {
+  title?: string | null;
+  articles?: NewsDetailArticle[];
+};
+
 export type ContentPageProps = {
   title?: string | null;
   locale?: string | null;
@@ -80,9 +147,20 @@ export type ContentPageProps = {
   richTextBlocks?: RichTextBlockData[];
   contactWidgets?: ContactWidgetData[];
   childPages?: ChildPageSummary[];
+  childPagesHeading?: string | null;
   importantLinks?: ImportantLinkItem[];
   quickLinks?: QuickLinkItem[];
   quickLinksTitle?: string | null;
+  facultyWidget?: FacultyWidgetData | null;
+  newsWidget?: FeaturedNewsWidgetData | null;
+  newsDetailSection?: NewsDetailSectionData | null;
+  eventDetailSection?: EventDetailSectionData | null;
+  videoSections?: VideoSectionData[];
+  photoAlbumSections?: PhotoAlbumSectionData[];
+  downloadSections?: DownloadSectionData[];
+  testimonialsSections?: TestimonialsSectionData[];
+  forms?: FormSectionData[];
+  eventsWidget?: EventsCalendarData | null;
 };
 
 const normalizeLocale = (value?: string | null): LocaleKey => {
@@ -97,7 +175,7 @@ const resolveDirection = (locale?: string | null) => {
   return rtlLocales.some((candidate) => locale.toLowerCase().startsWith(candidate)) ? 'rtl' : 'ltr';
 };
 
-type TextInlineNode = { type: 'text'; text: string };
+type TextInlineNode = { type: 'text'; text: string; bold?: boolean };
 type ListItemNode = { type: 'list-item'; children: TextInlineNode[] };
 type BlocksNode = BlocksContent[number];
 type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
@@ -105,17 +183,51 @@ type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
 const clampHeadingLevel = (level: number): HeadingLevel =>
   Math.min(Math.max(Math.round(level) || 1, 1), 6) as HeadingLevel;
 
-const createTextNode = (text: string): TextInlineNode => ({ type: 'text', text });
+const createTextNode = (text: string, options?: { bold?: boolean }): TextInlineNode => ({
+  type: 'text',
+  text,
+  ...(options?.bold ? { bold: true } : {}),
+});
+
+const parseInlineText = (value: string): TextInlineNode[] => {
+  if (!value.includes('**')) {
+    return value ? [createTextNode(value)] : [];
+  }
+
+  const nodes: TextInlineNode[] = [];
+  const pattern = /\*\*(.+?)\*\*/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = pattern.exec(value)) !== null) {
+    if (match.index > lastIndex) {
+      nodes.push(createTextNode(value.slice(lastIndex, match.index)));
+    }
+    nodes.push(createTextNode(match[1], { bold: true }));
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < value.length) {
+    nodes.push(createTextNode(value.slice(lastIndex)));
+  }
+
+  return nodes.length ? nodes : value ? [createTextNode(value)] : [];
+};
+
+const inlineNodes = (text: string): TextInlineNode[] => {
+  const nodes = parseInlineText(text);
+  return nodes.length ? nodes : [createTextNode(text)];
+};
 
 const createParagraphBlock = (text: string): BlocksNode => ({
   type: 'paragraph',
-  children: [createTextNode(text)],
+  children: inlineNodes(text),
 });
 
 const createHeadingBlock = (text: string, level: number): BlocksNode => ({
   type: 'heading',
   level: clampHeadingLevel(level),
-  children: [createTextNode(text)],
+  children: inlineNodes(text),
 });
 
 const createListBlock = (items: string[], ordered: boolean): BlocksNode => ({
@@ -123,7 +235,7 @@ const createListBlock = (items: string[], ordered: boolean): BlocksNode => ({
   format: ordered ? 'ordered' : 'unordered',
   children: items.map<ListItemNode>((item) => ({
     type: 'list-item',
-    children: [createTextNode(item)],
+    children: inlineNodes(item),
   })),
 });
 
@@ -310,9 +422,20 @@ export default function ContentPage({
   richTextBlocks = [],
   contactWidgets = [],
   childPages = [],
+  childPagesHeading,
   importantLinks = [],
   quickLinks = [],
   quickLinksTitle,
+  facultyWidget,
+  newsWidget,
+  newsDetailSection,
+  videoSections = [],
+  photoAlbumSections = [],
+  downloadSections = [],
+  testimonialsSections = [],
+  forms = [],
+  eventsWidget,
+  eventDetailSection,
 }: ContentPageProps) {
   const normalizedLocale = normalizeLocale(locale);
   const direction = resolveDirection(locale ?? normalizedLocale);
@@ -342,11 +465,88 @@ export default function ContentPage({
 
           {richTextBlocks.length
             ? richTextBlocks.map((block, index) => renderRichTextBlock(block, index))
-            : <p className="no-items">{text.noContent}</p>}
+            : null}
+
+          {facultyWidget?.members?.length ? (
+            <FacultyWidget
+              title={facultyWidget.title}
+              subtitle={facultyWidget.subtitle}
+              members={facultyWidget.members}
+              locale={normalizedLocale}
+            />
+          ) : null}
+
+          {newsDetailSection?.articles?.length ? (
+            <NewsDetailSection
+              title={newsDetailSection.title ?? text.newsTitle}
+              articles={newsDetailSection.articles}
+              locale={locale ?? normalizedLocale}
+            />
+          ) : newsWidget ? (
+            <FeaturedNews
+              newsTitle={newsWidget.newsTitle ?? text.newsTitle}
+              announcementsTitle={newsWidget.announcementsTitle ?? text.announcementsTitle}
+              fallbackTitle={newsWidget.fallbackTitle ?? text.announcementsTitle}
+              newsLinkLabel={newsWidget.newsLinkLabel ?? text.newsLinkLabel}
+              announcementLinkLabel={newsWidget.announcementLinkLabel ?? text.announcementLinkLabel}
+              featuredNews={newsWidget.featuredNews}
+              announcementLinks={newsWidget.announcementLinks}
+              emptyAnnouncementsCopy={newsWidget.emptyAnnouncementsCopy ?? text.noAnnouncements}
+            />
+          ) : null}
+
+          {videoSections.length
+            ? videoSections.map((section) => (
+                <VideoSection key={section.id} section={section} direction={direction} />
+              ))
+            : null}
+
+          {photoAlbumSections.length
+            ? photoAlbumSections.map((section) => (
+                <PhotoAlbumSection key={section.id} section={section} direction={direction} />
+              ))
+            : null}
+
+          {testimonialsSections.length
+            ? testimonialsSections.map((section) => (
+                <TestimonialsSection key={section.id} section={section} direction={direction} />
+              ))
+            : null}
+
+          {eventsWidget?.events?.length ? (
+            <EventsCalendarSection
+              data={{
+                title: eventsWidget.title ?? text.eventsCalendarTitle,
+                events: eventsWidget.events,
+              }}
+              locale={locale ?? normalizedLocale}
+              direction={direction}
+              listHeading={text.eventsListTitle}
+              emptyState={text.noEvents}
+            />
+          ) : null}
+
+          {eventDetailSection?.events?.length ? (
+            <EventDetailSection
+              title={eventDetailSection.title ?? text.eventsListTitle}
+              events={eventDetailSection.events}
+              locale={locale ?? normalizedLocale}
+            />
+          ) : null}
+
+          {downloadSections.length
+            ? downloadSections.map((section) => (
+                <DownloadSection key={section.id} section={section} />
+              ))
+            : null}
+
+          {forms.length
+            ? forms.map((form) => <FormSection key={form.id} form={form} direction={direction} />)
+            : null}
 
           {childPages.length ? (
             <section className="child-pages-section">
-              <h2 className="child-pages-title">{text.childPagesTitle}</h2>
+              <h2 className="child-pages-title">{childPagesHeading ?? text.childPagesTitle}</h2>
               <div className="child-pages-grid">
                 {childPages.map((child, index) => {
                   const content = (
@@ -356,10 +556,20 @@ export default function ContentPage({
                     </>
                   );
 
-                  const key = child.id ?? child.slug ?? child.title ?? `child-${index}`;
-                  if (child.slug) {
+                  const key = child.id ?? child.slug ?? child.href ?? child.title ?? `child-${index}`;
+                  const href = child.href ?? (child.slug ? `/${child.slug}` : null);
+                  const isExternal = child.isExternal ?? /^https?:\/\//i.test(href ?? '');
+
+                  if (href) {
+                    if (isExternal) {
+                      return (
+                        <a key={key} href={href} className="child-page-card" target="_blank" rel="noopener noreferrer">
+                          {content}
+                        </a>
+                      );
+                    }
                     return (
-                      <Link key={key} href={`/${child.slug}`} className="child-page-card">
+                      <Link key={key} href={href} className="child-page-card">
                         {content}
                       </Link>
                     );

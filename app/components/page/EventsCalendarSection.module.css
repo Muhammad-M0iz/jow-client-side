@@ -1,0 +1,192 @@
+.eventsSection {
+  margin-top: 3rem;
+  padding: 2rem 0;
+}
+
+.eventsHeader {
+  margin-bottom: 1.5rem;
+}
+
+.sectionTitle {
+  font-size: 2rem;
+  margin: 0;
+  color: #2c2c2c;
+}
+
+.sectionSubtitle {
+  margin: 0.25rem 0 0;
+  color: #666;
+}
+
+.calendarLayout {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
+}
+
+.calendarCard,
+.eventsListCard {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.calendar {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.calendar :global(.react-calendar) {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+}
+
+.calendar :global(.react-calendar__tile--active),
+.calendar :global(.react-calendar__tile--now) {
+  background: rgba(139, 115, 85, 0.2);
+}
+
+.calendar :global(.react-calendar__tile) {
+  border-radius: 10px;
+  padding: 0.75rem 0;
+}
+
+.eventDot {
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #8b7355;
+  margin: 0.25rem auto 0;
+}
+
+.dailyList {
+  margin-top: 1rem;
+}
+
+.dailyHeading {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  color: #444;
+}
+
+.dailyEvents {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dailyEventItem {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  background: #f9f7f2;
+}
+
+.dailyEventTitle {
+  font-weight: 600;
+  margin: 0;
+}
+
+.meta {
+  margin: 0.15rem 0 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.emptyState {
+  margin: 0;
+  color: #777;
+}
+
+.listHeading {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+}
+
+.eventsList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.eventCard {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 1rem;
+  align-items: center;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 1rem;
+}
+
+.eventMetaBlock {
+  min-width: 150px;
+}
+
+.eventDate {
+  font-weight: 600;
+  margin: 0;
+}
+
+.eventTime {
+  margin: 0.25rem 0 0;
+  color: #666;
+}
+
+.eventContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.eventTitle {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.eventSubtitle {
+  margin: 0;
+  color: #555;
+  font-style: italic;
+}
+
+.eventLocation {
+  margin: 0;
+  color: #444;
+}
+
+.eventBody {
+  margin: 0;
+  color: #555;
+}
+
+.eventImage {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+@media (max-width: 768px) {
+  .eventCard {
+    grid-template-columns: 1fr;
+  }
+
+  .eventMetaBlock {
+    min-width: auto;
+  }
+}

@@ -5,13 +5,12 @@ import { getFooter } from '../lib/footer';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 
-// --- This is your API call ---
 async function getNavigation(locale: string): Promise<MenuItem[]> {
   const endpoint = `/api/navigation?locale=${locale}`;
 
   try {
     const res = await fetch(`${STRAPI_URL}${endpoint}`, {
-      next: { revalidate: 60 }, // ISR: Re-fetch every 60 seconds
+      next: { revalidate: 60 }, 
     });
 
     if (!res.ok) {

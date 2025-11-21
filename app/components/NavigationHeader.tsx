@@ -1,7 +1,6 @@
 import { Header, MenuItem } from './Header';
-
+import { getServerLocale } from '../lib/get-locale';
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL ?? 'http://localhost:1337';
-const NAVIGATION_LOCALE = process.env.NEXT_PUBLIC_DEFAULT_LOCALE ?? 'en';
 const NAVIGATION_REVALIDATE_SECONDS = 60;
 
 type NavigationApiItem = {
@@ -33,10 +32,10 @@ function mapNavigation(items: NavigationApiItem[] = []): MenuItem[] {
   }));
 }
 
-async function fetchNavigation(): Promise<{ items: MenuItem[]; error?: string }> {
+async function fetchNavigation(locale: string): Promise<{ items: MenuItem[]; error?: string }> {
   try {
     const url = new URL('/api/navigation', STRAPI_URL);
-    url.searchParams.set('locale', NAVIGATION_LOCALE);
+    url.searchParams.set('locale', locale); 
 
     const response = await fetch(url.toString(), {
       next: { revalidate: NAVIGATION_REVALIDATE_SECONDS },
@@ -60,6 +59,8 @@ async function fetchNavigation(): Promise<{ items: MenuItem[]; error?: string }>
 }
 
 export async function NavigationHeader() {
-  const { items, error } = await fetchNavigation();
+  const locale = await getServerLocale();
+  const { items, error } = await fetchNavigation(locale);
+  
   return <Header menuItems={items} fetchError={error} />;
 }

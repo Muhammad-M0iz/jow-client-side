@@ -53,25 +53,17 @@
 .section-heading.section-heading--sub {
   margin-top: 3rem;
 }
-
 .section-title {
-  margin: 0 0 1rem;
-  font-size: clamp(1.5rem, 2vw + 0.25rem, 2.5rem);
-  font-weight: 700;
-  color: #2b2114;
-  letter-spacing: 0.5px;
-  text-align: var(--align-start);
-  direction: var(--flow-direction);
-}
-
-.section-title::after {
-  content: '';
-  display: block;
-  width: 72px;
-  height: 3px;
-  border-radius: 999px;
-  margin-top: 0.75rem;
-  background: linear-gradient(90deg, #8b7355 0%, rgba(139, 115, 85, 0.1) 100%);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  direction: rtl;
+  border-bottom: 3px solid #2c3e50;
+  padding-bottom: 0.5rem;
+  display: inline-block;
+  width: auto;
 }
 
 .section-title.section-title--muted {

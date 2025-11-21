@@ -1,0 +1,130 @@
+.photo-album-section {
+  margin: 3rem 0;
+}
+
+.photo-album-section__title {
+  font-size: 1.75rem;
+  margin-bottom: 1.5rem;
+  color: #8b7355;
+  text-align: start;
+}
+
+.photo-album + .photo-album {
+  margin-top: 2.5rem;
+}
+
+.photo-album__header {
+  margin-bottom: 1rem;
+}
+
+.photo-album__title {
+  margin: 0 0 0.35rem 0;
+  font-size: 1.25rem;
+  color: #2a2a2a;
+}
+
+.photo-album__description {
+  margin: 0;
+  color: #555;
+  line-height: 1.6;
+  max-width: 60ch;
+}
+
+.photo-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+
+.photo-grid__item {
+  position: relative;
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 12px;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.photo-grid__item img {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  transition: transform 0.25s ease, filter 0.25s ease;
+}
+
+.photo-grid__item:hover img,
+.photo-grid__item:focus-visible img {
+  transform: scale(1.05);
+}
+
+.photo-lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  z-index: 1000;
+}
+
+.photo-lightbox__content {
+  position: relative;
+  max-width: 960px;
+  width: 100%;
+  background: #111;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+}
+
+.photo-lightbox__close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.photo-lightbox__image {
+  width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #000;
+}
+
+.photo-lightbox__meta {
+  margin-top: 1rem;
+  color: #fff;
+}
+
+.photo-lightbox__meta h4 {
+  margin: 0 0 0.35rem 0;
+  font-size: 1.1rem;
+}
+
+.photo-lightbox__meta p {
+  margin: 0;
+  line-height: 1.5;
+  color: #f1f1f1;
+}
+
+@media (max-width: 600px) {
+  .photo-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+
+  .photo-lightbox__content {
+    padding: 1rem;
+  }
+}
