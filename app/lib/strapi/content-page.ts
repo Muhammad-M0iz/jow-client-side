@@ -302,6 +302,7 @@ type PageFormFieldEntry = {
     allowedTypes?: string[];
     pattern?: string;
   } | null;
+  childFields?: PageFormFieldEntry[] | null;
 };
 
 const normalizeLocale = (value?: string | null): LocaleKey => {
@@ -377,7 +378,7 @@ const buildQueryString = (slug: string, locale: LocaleKey) => {
   params.set('locale', locale);
   params.set('populate[content_sections][populate]', 'deep');
   params.set('populate[children]', 'true');
-  params.set('populate[forms]', 'true');
+  params.set('populate[forms][populate]', 'deep');
   params.set('pagination[pageSize]', '1');
   return params.toString();
 };
@@ -869,6 +870,41 @@ const mapForms = (forms?: PageFormEntry[] | null): ContentPageProps['forms'] => 
     return [];
   }
 
+  // Helper to map child fields recursively (for Sections AND Repeaters)
+  const mapChildFields = (
+    formIndex: number, 
+    fieldIndex: number, 
+    childFields?: PageFormFieldEntry[] | null
+  ): FormFieldResult['childFields'] => {
+    if (!childFields?.length) return null;
+
+    return childFields
+      .map((child, childIndex) => {
+        // Create a unique ID if one doesn't exist
+        const childId = child.id ?? `child-field-${formIndex}-${fieldIndex}-${childIndex}`;
+        if (!childId) return null;
+
+        return {
+          id: childId,
+          type: child.type ?? 'text',
+          label: child.label ?? null,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          description: (child as any).description ?? null, 
+          placeholder: child.placeholder ?? null,
+          required: child.required ?? null,
+          options: sanitizeFieldOptions(child.options),
+          validation: child.validation ?? null,
+          
+          // RECURSION FIX: 
+          // If a child is a Repeater (inside a Section), we must map ITS children too.
+          childFields: (child.type === 'repeater' || child.type === 'section')
+            ? mapChildFields(formIndex, childIndex, child.childFields) 
+            : null,
+        };
+      })
+      .filter((c): c is NonNullable<typeof c> => Boolean(c));
+  };
+
   return forms
     .map((form, formIndex) => {
       const fields = Array.isArray(form.fields)
@@ -878,14 +914,23 @@ const mapForms = (forms?: PageFormEntry[] | null): ContentPageProps['forms'] => 
               if (!id) {
                 return null;
               }
+
               const formField: FormFieldResult = {
                 id,
                 type: field.type ?? 'text',
                 label: field.label ?? null,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                description: (field as any).description ?? null, 
                 placeholder: field.placeholder ?? null,
                 required: field.required ?? null,
                 options: sanitizeFieldOptions(field.options),
                 validation: field.validation ?? null,
+
+                // LOGIC FIX: 
+                // Check for BOTH 'repeater' AND 'section' to map their children
+                childFields: (field.type === 'repeater' || field.type === 'section') 
+                  ? mapChildFields(formIndex, fieldIndex, field.childFields) 
+                  : null,
               };
               return formField;
             })

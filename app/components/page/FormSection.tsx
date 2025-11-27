@@ -20,11 +20,15 @@ const SUPPORTED_TYPES = [
   'phone',
   'multiselect',
   'url',
+  'cnic',
+  'repeater',
+  'section', // Added section type
 ] as const;
 
 type SupportedFieldType = (typeof SUPPORTED_TYPES)[number];
 
-type FieldValue = string | string[] | boolean;
+type RepeaterRowValue = Record<string, string>;
+type FieldValue = string | string[] | boolean | RepeaterRowValue[];
 type FormValues = Record<string, FieldValue>;
 type FileValues = Record<string, File[]>;
 
@@ -37,6 +41,7 @@ export type FormFieldDefinition = {
   id: string;
   type?: string | null;
   label?: string | null;
+  description?: string | null; // Added description for sections
   placeholder?: string | null;
   required?: boolean | null;
   options?: Array<string | { label?: string | null; value?: string | null }> | null;
@@ -45,6 +50,7 @@ export type FormFieldDefinition = {
     allowedTypes?: string[];
     pattern?: string;
   } | null;
+  childFields?: FormFieldDefinition[] | null;
 };
 
 export type FormSectionData = {
@@ -52,7 +58,7 @@ export type FormSectionData = {
   documentId?: string | null;
   name?: string | null;
   slug?: string | null;
-  fields: FormFieldDefinition[];
+  fields: FormFieldDefinition[]; // These are now Section objects
 };
 
 export type FormSectionProps = {
@@ -99,11 +105,22 @@ const normalizeOptions = (field: FormFieldDefinition): NormalizedOption[] => {
     .filter((entry): entry is NormalizedOption => Boolean(entry));
 };
 
-const buildInitialValues = (fields: FormFieldDefinition[]): FormValues => {
-  return fields.reduce<FormValues>((acc, field) => {
+const buildInitialValues = (allFields: FormFieldDefinition[]): FormValues => {
+  return allFields.reduce<FormValues>((acc, field) => {
     if (!field.id) return acc;
     const type = normalizeFieldType(field.type);
-    if (type === 'multiselect') {
+    
+    // Skip sections in value map, only map inputs
+    if (type === 'section') return acc;
+
+    if (type === 'repeater') {
+      const childFields = field.childFields || [];
+      const emptyRow: RepeaterRowValue = {};
+      childFields.forEach((child) => {
+        if (child.id) emptyRow[child.id] = '';
+      });
+      acc[field.id] = [emptyRow];
+    } else if (type === 'multiselect') {
       acc[field.id] = [];
     } else if (type === 'boolean') {
       acc[field.id] = false;
@@ -125,8 +142,16 @@ const getAcceptValue = (field: FormFieldDefinition) => {
 };
 
 const FormSection = ({ form, direction = 'ltr' }: FormSectionProps) => {
-  const fields = useMemo(() => form.fields.filter((field) => !!field.id), [form.fields]);
-  const initialValues = useMemo(() => buildInitialValues(fields), [fields]);
+  // 1. We keep 'sections' for rendering the layout
+  const sections = useMemo(() => form.fields || [], [form.fields]);
+
+  // 2. We flatten all fields inside sections to handle state and validation easily
+  const flatFields = useMemo(() => {
+    return sections.flatMap(section => section.childFields || []).filter(field => !!field.id);
+  }, [sections]);
+
+  const initialValues = useMemo(() => buildInitialValues(flatFields), [flatFields]);
+  
   const [values, setValues] = useState<FormValues>(initialValues);
   const [fileValues, setFileValues] = useState<FileValues>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -141,7 +166,7 @@ const FormSection = ({ form, direction = 'ltr' }: FormSectionProps) => {
     setMessage(null);
   }, [initialValues]);
 
-  if (!fields.length) {
+  if (!sections.length) {
     return null;
   }
 
@@ -182,7 +207,8 @@ const FormSection = ({ form, direction = 'ltr' }: FormSectionProps) => {
   const validateForm = () => {
     const nextErrors: Record<string, string> = {};
 
-    fields.forEach((field) => {
+    // Validate using the flattened list of actual inputs
+    flatFields.forEach((field) => {
       const fieldId = field.id;
       const type = normalizeFieldType(field.type);
       const value = values[fieldId];
@@ -229,6 +255,12 @@ const FormSection = ({ form, direction = 'ltr' }: FormSectionProps) => {
             nextErrors[fieldId] = 'Please enter a valid phone number.';
           }
           break;
+        case 'cnic':
+          // Pakistani CNIC format: 12345-1234567-1
+          if (typeof value === 'string' && !/^\d{5}-\d{7}-\d{1}$/.test(value)) {
+            nextErrors[fieldId] = 'Please enter a valid CNIC (format: 12345-1234567-1).';
+          }
+          break;
         case 'number':
           if (typeof value === 'string' && Number.isNaN(Number(value))) {
             nextErrors[fieldId] = 'Please enter a numeric value.';
@@ -255,26 +287,37 @@ const FormSection = ({ form, direction = 'ltr' }: FormSectionProps) => {
         case 'multiselect': {
           const allowed = new Set(options.map((option) => option.value));
           if (Array.isArray(value) && value.length && allowed.size) {
-            const invalid = value.some((entry) => !allowed.has(entry));
+            const stringValues = value.filter((v): v is string => typeof v === 'string');
+            const invalid = stringValues.some((entry) => !allowed.has(entry));
             if (invalid) {
               nextErrors[fieldId] = 'One or more selections are invalid.';
             }
           }
           break;
         }
+        case 'repeater': {
+          if (Array.isArray(value)) {
+            const rows = value as RepeaterRowValue[];
+            const childFields = field.childFields || [];
+            
+            for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+              const row = rows[rowIndex];
+              for (const childField of childFields) {
+                if (!childField.id) continue;
+                const childValue = row[childField.id] || '';
+                const childLabel = `${childField.label || childField.id} (Row ${rowIndex + 1})`;
+
+                if (childField.required && !childValue) {
+                  nextErrors[fieldId] = `${childLabel} is required.`;
+                  return;
+                }
+              }
+            }
+          }
+          break;
+        }
         default:
           break;
-      }
-
-      if (field.validation?.pattern && typeof value === 'string') {
-        try {
-          const regexp = new RegExp(field.validation.pattern);
-          if (!regexp.test(value)) {
-            nextErrors[fieldId] = 'Value does not match the expected format.';
-          }
-        } catch {
-          // Ignore invalid patterns
-        }
       }
     });
 
@@ -303,13 +346,16 @@ const FormSection = ({ form, direction = 'ltr' }: FormSectionProps) => {
     const formData = new FormData();
 
     Object.entries(values).forEach(([fieldId, value]) => {
-      if (value === undefined || value === null) {
+      if (value === undefined || value === null) return;
+
+      if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'object') {
+        formData.append(fieldId, JSON.stringify(value));
         return;
       }
 
       if (Array.isArray(value)) {
         value.forEach((entry) => {
-          if (entry !== undefined && entry !== null && entry !== '') {
+          if (typeof entry === 'string' && entry !== '') {
             formData.append(fieldId, entry);
           }
         });
@@ -346,7 +392,7 @@ const FormSection = ({ form, direction = 'ltr' }: FormSectionProps) => {
           const payload = await response.json();
           errorMessage = payload?.error?.message ?? payload?.message ?? errorMessage;
         } catch {
-          // ignore json parse errors
+          // ignore
         }
         throw new Error(errorMessage);
       }
@@ -363,6 +409,7 @@ const FormSection = ({ form, direction = 'ltr' }: FormSectionProps) => {
     }
   };
 
+  // --- Render Helpers (Text, Select, Radio, etc.) same as before ---
   const renderTextInput = (field: FormFieldDefinition, typeAttribute: string) => {
     const fieldId = field.id;
     const value = values[fieldId];
@@ -406,12 +453,16 @@ const FormSection = ({ form, direction = 'ltr' }: FormSectionProps) => {
     const describedBy = errorMessage ? `${fieldId}-error` : undefined;
     const options = normalizeOptions(field);
 
+    const selectValue = multiple
+      ? (Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [])
+      : (typeof value === 'string' ? value : '');
+
     return (
       <select
         id={fieldId}
         name={fieldId}
         multiple={multiple}
-        value={multiple && Array.isArray(value) ? value : !multiple && typeof value === 'string' ? value : multiple ? [] : ''}
+        value={selectValue}
         required={Boolean(field.required)}
         aria-invalid={Boolean(errorMessage)}
         aria-describedby={describedBy}
@@ -508,6 +559,128 @@ const FormSection = ({ form, direction = 'ltr' }: FormSectionProps) => {
     );
   };
 
+  const renderRepeaterField = (field: FormFieldDefinition) => {
+    const fieldId = field.id;
+    const value = values[fieldId];
+    const rows = Array.isArray(value) ? (value as RepeaterRowValue[]) : [];
+    const childFields = field.childFields || [];
+    const errorMessage = errors[fieldId];
+
+    const addRow = () => {
+      const newRow: RepeaterRowValue = {};
+      childFields.forEach((child) => {
+        if (child.id) newRow[child.id] = '';
+      });
+      setValues((prev) => ({
+        ...prev,
+        [fieldId]: [...rows, newRow],
+      }));
+      clearError(fieldId);
+    };
+
+    const removeRow = (rowIndex: number) => {
+      if (rows.length <= 1) return;
+      setValues((prev) => ({
+        ...prev,
+        [fieldId]: rows.filter((_, i) => i !== rowIndex),
+      }));
+      clearError(fieldId);
+    };
+
+    const updateRowField = (rowIndex: number, childFieldId: string, newValue: string) => {
+      setValues((prev) => {
+        const updatedRows = [...rows];
+        updatedRows[rowIndex] = {
+          ...updatedRows[rowIndex],
+          [childFieldId]: newValue,
+        };
+        return {
+          ...prev,
+          [fieldId]: updatedRows,
+        };
+      });
+      clearError(fieldId);
+    };
+
+    const getChildInputType = (childType?: string | null): string => {
+        switch (childType) {
+          case 'email': return 'email';
+          case 'phone': return 'tel';
+          case 'number': return 'number';
+          case 'date': return 'date';
+          default: return 'text';
+        }
+      };
+  
+      return (
+        <div className="repeater-field">
+          <div className="repeater-rows">
+            {rows.map((row, rowIndex) => (
+              <div key={rowIndex} className="repeater-row">
+                <div className="repeater-row-number">{rowIndex + 1}</div>
+                <div className="repeater-row-fields">
+                  {childFields.map((childField) => {
+                    if (!childField.id) return null;
+                    const childValue = row[childField.id] || '';
+                    const childOptions = normalizeOptions(childField);
+  
+                    return (
+                      <div key={childField.id} className="repeater-child-field">
+                        <label>
+                          {childField.label || childField.id}
+                          {childField.required ? <span className="required-indicator">*</span> : null}
+                        </label>
+                        {childField.type === 'select' ? (
+                          <select
+                            value={childValue}
+                            onChange={(e) => updateRowField(rowIndex, childField.id, e.target.value)}
+                          >
+                            <option value="">Select...</option>
+                            {childOptions.map((opt) => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                          </select>
+                        ) : childField.type === 'textarea' ? (
+                          <textarea
+                            value={childValue}
+                            placeholder={childField.placeholder || ''}
+                            onChange={(e) => updateRowField(rowIndex, childField.id, e.target.value)}
+                            rows={3}
+                          />
+                        ) : (
+                          <input
+                            type={getChildInputType(childField.type)}
+                            value={childValue}
+                            placeholder={childField.placeholder || ''}
+                            onChange={(e) => updateRowField(rowIndex, childField.id, e.target.value)}
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                <button
+                  type="button"
+                  className="repeater-remove-btn"
+                  onClick={() => removeRow(rowIndex)}
+                  disabled={rows.length <= 1}
+                  title="Remove row"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+          <button type="button" className="repeater-add-btn" onClick={addRow}>
+            + Add {field.label || 'Entry'}
+          </button>
+          {errorMessage ? (
+            <p className="form-field-error">{errorMessage}</p>
+          ) : null}
+        </div>
+      );
+    };
+
   const renderField = (field: FormFieldDefinition) => {
     const type = normalizeFieldType(field.type);
     const errorMessage = errors[field.id];
@@ -524,34 +697,22 @@ const FormSection = ({ form, direction = 'ltr' }: FormSectionProps) => {
 
         {(() => {
           switch (type) {
-            case 'textarea':
-              return renderTextInput(field, 'textarea');
-            case 'email':
-              return renderTextInput(field, 'email');
-            case 'phone':
-              return renderTextInput(field, 'tel');
-            case 'number':
-              return renderTextInput(field, 'number');
-            case 'date':
-              return renderTextInput(field, 'date');
-            case 'time':
-              return renderTextInput(field, 'time');
-            case 'datetime':
-              return renderTextInput(field, 'datetime-local');
-            case 'url':
-              return renderTextInput(field, 'url');
-            case 'select':
-              return renderSelectField(field);
-            case 'multiselect':
-              return renderSelectField(field, true);
-            case 'radio':
-              return renderRadioField(field);
-            case 'boolean':
-              return renderBooleanField(field);
-            case 'upload':
-              return renderUploadField(field);
-            default:
-              return renderTextInput(field, 'text');
+            case 'textarea': return renderTextInput(field, 'textarea');
+            case 'email': return renderTextInput(field, 'email');
+            case 'phone': return renderTextInput(field, 'tel');
+            case 'number': return renderTextInput(field, 'number');
+            case 'date': return renderTextInput(field, 'date');
+            case 'time': return renderTextInput(field, 'time');
+            case 'datetime': return renderTextInput(field, 'datetime-local');
+            case 'url': return renderTextInput(field, 'url');
+            case 'cnic': return renderTextInput(field, 'text');
+            case 'select': return renderSelectField(field);
+            case 'multiselect': return renderSelectField(field, true);
+            case 'radio': return renderRadioField(field);
+            case 'boolean': return renderBooleanField(field);
+            case 'upload': return renderUploadField(field);
+            case 'repeater': return renderRepeaterField(field);
+            default: return renderTextInput(field, 'text');
           }
         })()}
 
@@ -564,6 +725,7 @@ const FormSection = ({ form, direction = 'ltr' }: FormSectionProps) => {
     );
   };
 
+  // --- Main Render: Iterate over SECTIONS now ---
   return (
     <section className="form-section" dir={direction} aria-live="polite">
       <div className="form-card">
@@ -576,8 +738,24 @@ const FormSection = ({ form, direction = 'ltr' }: FormSectionProps) => {
             {status === 'submitting' ? 'Submitting…' : status === 'success' ? 'Ready' : null}
           </div>
         </div>
+        
         <form className="form-fields" onSubmit={handleSubmit} noValidate>
-          {fields.map((field) => renderField(field))}
+          {sections.map((section) => (
+            <div key={section.id} className="form-section-group">
+                <div className="form-section-group-header">
+                    <h3 className="form-section-group-title">{section.label}</h3>
+                    {section.description && (
+                        <p className="form-section-group-desc">{section.description}</p>
+                    )}
+                </div>
+                
+                <div className="form-section-group-fields">
+                    {/* Render fields inside the section */}
+                    {(section.childFields || []).map((field) => renderField(field))}
+                </div>
+            </div>
+          ))}
+
           <div className="form-actions">
             <button type="submit" className="form-submit" disabled={status === 'submitting'}>
               {status === 'submitting' ? 'Submitting…' : 'Submit form'}

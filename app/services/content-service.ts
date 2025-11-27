@@ -37,7 +37,7 @@ const buildPageQuery = (slug: string, locale: LocaleKey) => {
   params.set('locale', locale);
   params.set('populate[content_sections][populate]', 'deep');
   params.set('populate[children]', 'true');
-  params.set('populate[forms]', 'true');
+  params.set('populate[forms][populate]', 'deep');
   params.set('pagination[pageSize]', '1');
   return params.toString();
 };

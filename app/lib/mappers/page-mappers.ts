@@ -19,6 +19,7 @@ import type {
   TestimonialsSection,
   EventsWidgetSection,
   PageFormEntry,
+  PageFormFieldEntry,
   PageEntry,
 } from '../../types/strapi-sections';
 import {
@@ -540,6 +541,45 @@ const mapForms = (forms?: PageFormEntry[] | null): ContentPageProps['forms'] => 
     return [];
   }
 
+  // Helper to map child fields recursively
+  const mapChildFields = (
+    childFields: PageFormFieldEntry[] | null | undefined,
+    formIndex: number,
+    fieldIndex: number
+  ): FormFieldDefinition[] | null => {
+    if (!childFields?.length) return null;
+
+    const mappedChildren: FormFieldDefinition[] = [];
+
+    for (let childIndex = 0; childIndex < childFields.length; childIndex++) {
+      const child = childFields[childIndex];
+      // Generate a fallback ID if missing
+      const childId = child.id ?? `child-field-${formIndex}-${fieldIndex}-${childIndex}`;
+      
+      if (!childId) continue;
+
+      mappedChildren.push({
+        id: childId,
+        type: child.type ?? 'text',
+        label: child.label ?? null,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        description: (child as any).description ?? null, 
+        placeholder: child.placeholder ?? null,
+        required: child.required ?? null,
+        options: sanitizeFieldOptions(child.options),
+        validation: child.validation ?? null,
+        
+        // RECURSION FIX:
+        // Check if this child is ITSELF a container (repeater or section)
+        // and map its children recursively.
+        childFields: (child.type === 'repeater' || child.type === 'section') 
+          ? mapChildFields(child.childFields, formIndex, childIndex) 
+          : null,
+      });
+    }
+    return mappedChildren.length > 0 ? mappedChildren : null;
+  };
+
   return forms
     .map<FormSectionResult | null>((form, formIndex) => {
       const fields = Array.isArray(form.fields)
@@ -549,14 +589,23 @@ const mapForms = (forms?: PageFormEntry[] | null): ContentPageProps['forms'] => 
               if (!id) {
                 return null;
               }
+
               const formField: FormFieldDefinition = {
                 id,
                 type: field.type ?? 'text',
                 label: field.label ?? null,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                description: (field as any).description ?? null,
                 placeholder: field.placeholder ?? null,
                 required: field.required ?? null,
                 options: sanitizeFieldOptions(field.options),
                 validation: field.validation ?? null,
+                
+                // MAIN FIX:
+                // Look for childFields in 'section' types as well as 'repeater'
+                childFields: (field.type === 'repeater' || field.type === 'section') 
+                  ? mapChildFields(field.childFields, formIndex, fieldIndex) 
+                  : null,
               };
               return formField;
             })

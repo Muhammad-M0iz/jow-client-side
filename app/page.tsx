@@ -267,11 +267,6 @@ export default async function HomePage() {
               {programItems.map((program, index) => (
                 <article key={program?.id ?? program?.documentId ?? `program-${index}`} className="program-card">
                   <h3 className="program-title">{program?.title}</h3>
-                  {program?.slug ? (
-                    <Link href={`/programs/${program.slug}`} className="program-link">
-                      {text.programDetails}
-                    </Link>
-                  ) : null}
                 </article>
               ))}
             </div>
@@ -337,7 +332,7 @@ export default async function HomePage() {
             <h2 className="section-title">{eventsTitle}</h2>
             <div className="events-grid">
               <EventCalendar events={upcomingEvents} locale={resolvedLocale} />
-              <Link href="/media-events/events" className="event-item event-more-btn">
+              <Link href="/events" className="event-item event-more-btn">
                 <div className="event-more-content">
                   <div className="event-more-icon">📅</div>
                   <h3 className="event-more-title">{text.eventsCtaTitle}</h3>

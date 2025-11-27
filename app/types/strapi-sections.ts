@@ -35,6 +35,7 @@ export type PageFormFieldEntry = {
     allowedTypes?: string[];
     pattern?: string;
   } | null;
+  childFields?: PageFormFieldEntry[] | null;
 };
 
 export type PageFormEntry = {
@@ -309,7 +310,7 @@ export type ProgramEntry = {
   id?: number;
   documentId?: string;
   title?: string | null;
-  slug?: string | null;
+  link?: string | null;
 };
 
 export type LifeItem = {

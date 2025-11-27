@@ -60,7 +60,7 @@ export type SearchCardProps = {
 export function SearchCard({ hit, indexUid }: SearchCardProps) {
   const title = (hit.title as string) ?? (hit.name as string) ?? 'Untitled';
   const snippet = pickSnippet(hit);
-  const href = ensurePath(hit.slug ?? hit.url ?? hit.path);
+  const href = ensurePath(hit.slug ?? hit.url ?? hit.link);
   const label = indexLabels[indexUid] ?? indexUid.replace(/[-_]/g, ' ');
 
   const content = (

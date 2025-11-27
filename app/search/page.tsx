@@ -6,7 +6,12 @@ export const metadata: Metadata = {
   description: 'Search across Jamia Urwatul Wusqa news, pages, events, and more.',
 };
 
-export default function SearchPage({ searchParams }: { searchParams?: { q?: string } }) {
-  const initialQuery = typeof searchParams?.q === 'string' ? searchParams.q : '';
+type SearchPageProps = {
+  searchParams: Promise<{ q?: string }>;
+};
+
+export default async function SearchPage({ searchParams }: SearchPageProps) {
+  const params = await searchParams;
+  const initialQuery = typeof params?.q === 'string' ? params.q : '';
   return <SearchView initialQuery={initialQuery} />;
 }
