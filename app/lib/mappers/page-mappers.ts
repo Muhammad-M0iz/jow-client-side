@@ -568,11 +568,7 @@ const mapForms = (forms?: PageFormEntry[] | null): ContentPageProps['forms'] => 
         required: child.required ?? null,
         options: sanitizeFieldOptions(child.options),
         validation: child.validation ?? null,
-        
-        // RECURSION FIX:
-        // Check if this child is ITSELF a container (repeater or section)
-        // and map its children recursively.
-        childFields: (child.type === 'repeater' || child.type === 'section') 
+        childFields: (child.type === 'repeater' || child.type === 'section' || child.type === 'statement') 
           ? mapChildFields(child.childFields, formIndex, childIndex) 
           : null,
       });

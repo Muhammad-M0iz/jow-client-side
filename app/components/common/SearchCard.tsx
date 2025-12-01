@@ -7,6 +7,13 @@ const indexLabels: Record<string, string> = {
   page: 'Page',
   event: 'Event',
   department: 'Department',
+  program: 'Program',
+  announcement: 'Announcement',
+  'faculty-member': 'Faculty Member',
+  testimonial: 'Testimonial',
+  'photo-album': 'Photo Album',
+  video: 'Video',
+  download: 'Download',
 };
 
 const pickSnippet = (hit: SearchHit) => {
@@ -60,7 +67,8 @@ export type SearchCardProps = {
 export function SearchCard({ hit, indexUid }: SearchCardProps) {
   const title = (hit.title as string) ?? (hit.name as string) ?? 'Untitled';
   const snippet = pickSnippet(hit);
-  const href = ensurePath(hit.slug ?? hit.url ?? hit.link);
+  // Prefer the generated link from MeiliSearch transformEntry, then fall back to slug/url
+  const href = ensurePath(hit.link ?? hit.slug ?? hit.url);
   const label = indexLabels[indexUid] ?? indexUid.replace(/[-_]/g, ' ');
 
   const content = (

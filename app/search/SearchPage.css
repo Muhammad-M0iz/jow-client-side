@@ -1,5 +1,7 @@
 .search-page {
   padding: 3rem 0;
+  flex: 1;
+  min-height: calc(100vh - 200px);
 }
 
 .search-page .container {
