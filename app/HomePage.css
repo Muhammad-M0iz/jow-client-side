@@ -50,6 +50,25 @@
   margin-bottom: 2rem;
 }
 
+.back-home {
+  display: inline-block;
+  padding: 0.75rem 2rem;
+  background: linear-gradient(135deg, #8B7355 0%, #6d5a42 100%);
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  margin-top: 1rem;
+}
+
+.back-home:hover {
+  background: linear-gradient(135deg, #6d5a42 0%, #8B7355 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 115, 85, 0.3);
+}
+
+
 .section-heading.section-heading--sub {
   margin-top: 3rem;
 }

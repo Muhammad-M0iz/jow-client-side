@@ -165,10 +165,18 @@ const FormSection = ({ form, direction = 'ltr' }: FormSectionProps) => {
       // Required Check
       if (field.required) {
         let isMissing = false;
-        if (type === 'upload' && !fileList?.length) isMissing = true;
-        else if (type === 'multiselect' && (!Array.isArray(value) || value.length === 0)) isMissing = true;
-        else if (type === 'boolean' && !value) isMissing = true;
-        else if (type !== 'statement' && !value) isMissing = true;
+        if (type === 'upload') {
+          if (!fileList?.length) isMissing = true;
+        } else if (type === 'multiselect') {
+          if (!Array.isArray(value) || value.length === 0) isMissing = true;
+        } else if (type === 'boolean') {
+          if (!value) isMissing = true;
+        } else if (type === 'statement') {
+          // Statement validation is handled in the specific block below
+          isMissing = false;
+        } else {
+          if (!value) isMissing = true;
+        }
 
         if (isMissing) {
           nextErrors[fieldId] = `${label} is required.`;
@@ -280,7 +288,7 @@ const FormSection = ({ form, direction = 'ltr' }: FormSectionProps) => {
       setFileValues({});
       setErrors({});
       setCurrentStep(0);
-    } catch (error) {
+    } catch {
       setStatus('error');
       setMessage('Unable to submit the form right now. Please try again.');
     }
