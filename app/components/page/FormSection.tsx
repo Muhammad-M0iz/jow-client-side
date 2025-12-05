@@ -280,7 +280,18 @@ const FormSection = ({ form, direction = 'ltr' }: FormSectionProps) => {
         body: formData,
       });
 
-      if (!response.ok) throw new Error('Submission failed');
+      const result = await response.json();
+
+      if (!response.ok) {
+        // Handle backend validation errors
+        if (result?.error?.message) {
+          setStatus('error');
+          setMessage(result.error.message);
+        } else {
+          throw new Error('Submission failed');
+        }
+        return;
+      }
 
       setStatus('success');
       setMessage('Thanks! Your response has been recorded.');
