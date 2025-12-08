@@ -134,34 +134,24 @@
 
 .content-body ul,
 .content-body ol {
-  margin: 1.5rem 0;
-  background: white;
-  padding: 1.5rem 2rem;
-  border-radius: 6px;
+  margin: 1rem 0;
   list-style: none;
-  
-  /* FIX: Padding on the "start" side (Left for EN, Right for UR) */
-  padding-inline-start: 2.5rem;
+  padding-inline-start: 1.5rem;
 }
 
 .content-body li {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
   line-height: 1.7;
   position: relative;
-  
-  /* FIX: Space for the bullet point */
-  padding-inline-start: 1.75rem;
+  padding-inline-start: 1.5rem;
 }
 
-/* Unordered List Bullets */
 .content-body ul li::before {
   content: '';
   position: absolute;
   
-  /* FIX: Position dot at the start */
   inset-inline-start: 0; 
   top: 0.6rem; /* Adjusted for alignment */
-  
   width: 0.55rem;
   height: 0.55rem;
   border-radius: 50%;
@@ -172,7 +162,7 @@
 /* Ordered List Numbers */
 .content-body ol {
   counter-reset: section-counter;
-  padding-inline-start: 3rem; /* More space for numbers */
+  padding-inline-start: 2.5rem; /* More space for numbers */
 }
 
 .content-body ol li {
