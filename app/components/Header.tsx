@@ -17,8 +17,6 @@ export interface MenuItem {
 const CTA_TITLES = new Set(['Admissions', 'Search']);
 const CTA_EXCLUDED_FROM_NAV = new Set(['Search']);
 
-// Removed static constant NAV_PRIMARY_LIMIT from here
-
 const FALLBACK_CTAS: MenuItem[] = [
   { id: -1, title: 'Search', order: 0, url: '/search', children: [] },
   { id: -2, title: 'Admissions', order: 1, url: '/admissions', children: [] },
@@ -34,11 +32,7 @@ export function Header({ menuItems, fetchError }: { menuItems: MenuItem[]; fetch
   const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const { locale, switchLanguage } = useLanguage();
-
-  // --- FIX: Dynamic Limit based on Locale ---
-  // English gets 5 items to prevent overflow, Urdu gets 6
   const navPrimaryLimit = locale === 'en' ? 5 : 6;
-
   const toggleLanguage = () => {
     const newLang = locale === 'en' ? 'ur' : 'en';
     switchLanguage(newLang);
@@ -185,7 +179,13 @@ export function Header({ menuItems, fetchError }: { menuItems: MenuItem[]; fetch
     );
   };
 
-  const actionItems = ctaItems.length ? ctaItems : FALLBACK_CTAS;
+  const actionItems = useMemo(() => {
+    const items = ctaItems.length ? [...ctaItems] : [...FALLBACK_CTAS];
+    if (!items.some((item) => item.title === 'Search')) {
+      items.unshift({ id: -1, title: 'Search', order: 0, url: '/search', children: [] });
+    }
+    return items;
+  }, [ctaItems]);
 
   return (
     <header className={`header ${isScrolled ? 'scrolled' : ''}`}>
