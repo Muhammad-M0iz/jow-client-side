@@ -17,9 +17,22 @@ export interface MenuItem {
 const CTA_TITLES = new Set(['Admissions', 'Search']);
 const CTA_EXCLUDED_FROM_NAV = new Set(['Search']);
 
-const FALLBACK_CTAS: MenuItem[] = [
-  { id: -1, title: 'Search', order: 0, url: '/search', children: [] },
-  { id: -2, title: 'Admissions', order: 1, url: '/admissions', children: [] },
+// Generate fallback CTAs dynamically based on locale
+const getFallbackCtas = (locale: string): MenuItem[] => [
+  {
+    id: -1,
+    title: locale === 'en' ? 'Search' : 'تلاش کریں',
+    order: 0,
+    url: '/search',
+    children: []
+  },
+  {
+    id: -2,
+    title: locale === 'ur' ? 'داخلے' : 'Admissions',
+    order: 1,
+    url: '/admissions',
+    children: []
+  }
 ];
 
 const actionButtonClass = (title: string) =>
@@ -32,7 +45,9 @@ export function Header({ menuItems, fetchError }: { menuItems: MenuItem[]; fetch
   const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const { locale, switchLanguage } = useLanguage();
+
   const navPrimaryLimit = locale === 'en' ? 5 : 6;
+
   const toggleLanguage = () => {
     const newLang = locale === 'en' ? 'ur' : 'en';
     switchLanguage(newLang);
@@ -74,8 +89,9 @@ export function Header({ menuItems, fetchError }: { menuItems: MenuItem[]; fetch
     const overflow: MenuItem[] = [];
 
     navigable.forEach((item) => {
-      // Use dynamic navPrimaryLimit here
-      const prefersPrimary = item.showInNav !== false && prioritized.length < navPrimaryLimit;
+      const prefersPrimary =
+        item.showInNav !== false && prioritized.length < navPrimaryLimit;
+
       if (prefersPrimary) {
         prioritized.push(item);
       } else {
@@ -86,9 +102,9 @@ export function Header({ menuItems, fetchError }: { menuItems: MenuItem[]; fetch
     return {
       ctaItems: ctas,
       mainNavItems: prioritized,
-      overflowNavItems: overflow,
+      overflowNavItems: overflow
     };
-  }, [menuItems, navPrimaryLimit]); // Added navPrimaryLimit to dependencies
+  }, [menuItems, navPrimaryLimit]);
 
   const hasMenuItems = mainNavItems.length > 0 || overflowNavItems.length > 0;
 
@@ -106,6 +122,7 @@ export function Header({ menuItems, fetchError }: { menuItems: MenuItem[]; fetch
             >
               <span className="nav-title">{child.title}</span>
             </Link>
+
             {hasSubmenu ? (
               <ul className="submenu">
                 {child.children.map((subItem) => (
@@ -132,7 +149,7 @@ export function Header({ menuItems, fetchError }: { menuItems: MenuItem[]; fetch
     const navItemClass = [
       'nav-item',
       hasChildren ? 'has-dropdown' : '',
-      activeDropdown === item.id ? 'active' : '',
+      activeDropdown === item.id ? 'active' : ''
     ]
       .filter(Boolean)
       .join(' ');
@@ -157,11 +174,13 @@ export function Header({ menuItems, fetchError }: { menuItems: MenuItem[]; fetch
   };
 
   const renderOverflow = () => {
-    if (!overflowNavItems.length) {
-      return null;
-    }
+    if (!overflowNavItems.length) return null;
 
-    const moreClasses = ['nav-item', 'has-dropdown', moreDropdownOpen ? 'active' : '']
+    const moreClasses = [
+      'nav-item',
+      'has-dropdown',
+      moreDropdownOpen ? 'active' : ''
+    ]
       .filter(Boolean)
       .join(' ');
 
@@ -172,7 +191,9 @@ export function Header({ menuItems, fetchError }: { menuItems: MenuItem[]; fetch
         onMouseLeave={() => setMoreDropdownOpen(false)}
       >
         <span className="nav-link">
-          <span className="nav-title">{locale === 'en' ? 'More' : 'مزید'}</span>
+          <span className="nav-title">
+            {locale === 'en' ? 'More' : 'مزید'}
+          </span>
         </span>
         {renderDropdownMenu(overflowNavItems)}
       </li>
@@ -180,26 +201,34 @@ export function Header({ menuItems, fetchError }: { menuItems: MenuItem[]; fetch
   };
 
   const actionItems = useMemo(() => {
-    const items = ctaItems.length ? [...ctaItems] : [...FALLBACK_CTAS];
-    if (!items.some((item) => item.title === 'Search')) {
-      items.unshift({ id: -1, title: 'Search', order: 0, url: '/search', children: [] });
+    const items = ctaItems.length ? [...ctaItems] : getFallbackCtas(locale);
+
+    // Always ensure search CTA is present with correct translation
+    const searchTitle = locale === 'en' ? 'Search' : 'تلاش کریں';
+    if (!items.some((i) => i.title === searchTitle)) {
+      items.unshift({
+        id: -1,
+        title: searchTitle,
+        order: 0,
+        url: '/search',
+        children: []
+      });
     }
+
     return items;
-  }, [ctaItems]);
+  }, [ctaItems, locale]);
 
   return (
     <header className={`header ${isScrolled ? 'scrolled' : ''}`}>
       <div className="top-bar">
         <div className="container">
           <div className="top-bar-content">
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-               <button 
-                 onClick={toggleLanguage}
-                 className="text-white text-sm font-bold px-3 py-1 border border-white/30 rounded hover:bg-white/10 transition"
-               >
-                 {locale === 'en' ? 'اردو' : 'English'}
-               </button>
-            </div>
+            <button 
+  onClick={toggleLanguage}
+  className="lang-toggle"
+>
+  {locale === 'en' ? 'اردو' : 'English'}
+</button>
             <div className="contact-info">
               <a href="tel:+923001234567" className="contact-item">
                 <span className="contact-icon">📞</span>

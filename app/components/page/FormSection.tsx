@@ -531,7 +531,29 @@ const FormSection = ({ form, direction = 'ltr' }: FormSectionProps) => {
              <option value="">Select...</option>
              {normalizeOptions(field).map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
            </select>
-        ) : type === 'upload' ? (
+        )
+        : type === 'multiselect' ? (
+  <div className="checkbox-group">
+    {normalizeOptions(field).map((opt) => (
+      <label key={opt.value} className="checkbox-label">
+        <input
+          type="checkbox"
+          checked={(value as string[] || []).includes(opt.value)}
+          onChange={(e) => {
+            const currentValues = (Array.isArray(value) ? value : []) as string[];
+            
+            if (e.target.checked) {
+              handleTextChange(field.id, [...currentValues, opt.value]);
+            } else {
+              handleTextChange(field.id, currentValues.filter((v) => v !== opt.value));
+            }
+          }}
+        />
+        <span className="checkbox-text">{opt.label}</span>
+      </label>
+    ))}
+  </div>)
+         : type === 'upload' ? (
            <input type="file" onChange={e => handleFileChange(field.id, e.target.files)} className="form-input" />
         ) : (
            <input 

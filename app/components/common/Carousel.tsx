@@ -26,14 +26,12 @@ const resolveDirection = (direction?: TextDirection, locale?: string): TextDirec
   if (direction) {
     return direction;
   }
-
   if (locale) {
     const normalized = locale.toLowerCase();
-    if (normalized.startsWith('ur') || normalized.startsWith('ar') || normalized.startsWith('fa')) {
+    if (normalized.startsWith('ur')) {
       return 'rtl';
     }
   }
-
   return 'ltr';
 };
 
@@ -51,14 +49,20 @@ export function Carousel({
 }: CarouselProps) {
   const filteredItems = useMemo(() => (items?.filter(Boolean) as CarouselItem[]) || [], [items]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  
+  // FIX: Track previous length to reset index efficiently without useEffect
+  const [prevLength, setPrevLength] = useState(filteredItems.length);
+
+  // FIX: If items change, reset index during render (prevents cascade render error)
+  if (filteredItems.length !== prevLength) {
+    setPrevLength(filteredItems.length);
+    setCurrentIndex(0);
+  }
+
   const resolvedDirection = resolveDirection(direction, locale);
   const wrapperClass = `${styles.carousel} ${
     resolvedDirection === 'rtl' ? styles.rtl : styles.ltr
   }`;
-
-  useEffect(() => {
-    setCurrentIndex(0);
-  }, [filteredItems.length]);
 
   useEffect(() => {
     if (!autoplay || filteredItems.length < 2) {
@@ -137,19 +141,21 @@ export function Carousel({
         <>
           <button
             type="button"
+            dir="ltr"
             className={prevControlClass}
             onClick={goToPrevious}
-            aria-label={resolvedDirection === 'rtl' ? 'اگلا سلائیڈ' : 'Previous slide'}
+            aria-label={resolvedDirection === 'rtl' ? 'پچھلی سلائیڈ' : 'Previous slide'}
           >
-            {resolvedDirection === 'rtl' ? '›' : '‹'}
+            {resolvedDirection === 'rtl' ? '❯' : '❮'}
           </button>
           <button
             type="button"
+            dir="ltr"
             className={nextControlClass}
             onClick={goToNext}
-            aria-label={resolvedDirection === 'rtl' ? 'پچھلا سلائیڈ' : 'Next slide'}
+            aria-label={resolvedDirection === 'rtl' ? 'اگلی سلائیڈ' : 'Next slide'}
           >
-            {resolvedDirection === 'rtl' ? '‹' : '›'}
+            {resolvedDirection === 'rtl' ? '❮' : '❯'}
           </button>
         </>
       )}

@@ -116,6 +116,26 @@
   width: 100%;
 }
 
+
+.lang-toggle {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: 0.2s ease-in-out;
+  margin-left: 5px;
+  margin-right: 5px;
+}
+
+.lang-toggle:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+
 /* 1. Logo Section - Sticks to the Start */
 .logo-section {
   display: flex;

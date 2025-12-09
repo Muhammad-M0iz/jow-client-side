@@ -1,3 +1,5 @@
+/* Carousel.module.css */
+
 .carousel {
   position: relative;
   width: 100%;
@@ -6,6 +8,13 @@
   border-radius: 12px;
   border: 1px solid rgba(139, 115, 85, 0.15);
   background: #f9f7f3;
+  /* Default to LTR */
+  direction: ltr;
+}
+
+/* Specific override for Urdu/RTL */
+.carousel.rtl {
+  direction: rtl;
 }
 
 .inner {
@@ -21,10 +30,12 @@
   height: 100%;
   opacity: 0;
   transition: opacity 0.6s ease-in-out;
+  /* Removed 'direction: ltr' so Urdu text inside captions aligns Right automatically */
 }
 
 .slideActive {
   opacity: 1;
+  z-index: 1;
 }
 
 .imageContainer {
@@ -38,6 +49,8 @@
   height: 100%;
   object-fit: cover;
   display: block;
+  /* Images generally shouldn't adhere to RTL flipping */
+  direction: ltr; 
 }
 
 .imagePlaceholder {
@@ -56,11 +69,14 @@
 
 .caption {
   position: absolute;
-  inset: auto 0 0;
+  inset: auto 0 0; /* Bottom aligned */
   padding: 1.5rem;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.55) 100%);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.6) 100%);
   color: white;
   pointer-events: none;
+  z-index: 2;
+  /* Text aligns based on parent direction (Left for Eng, Right for Urdu) */
+  text-align: start; 
 }
 
 .caption h2 {
@@ -75,6 +91,8 @@
   line-height: 1.4;
 }
 
+/* --- Controls (Buttons) --- */
+
 .control {
   position: absolute;
   top: 50%;
@@ -85,7 +103,141 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  font-size: 1.5rem;
+  /* Adjusted font size for the new Heavy Arrows ❮ ❯ */
+  font-size: 1.2rem; 
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0; /* Clean flex centering */
+  line-height: 0;
+}
+
+.control:hover {
+  background-color: rgba(139, 115, 85, 1);
+}
+
+.control:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+
+/* --- English / LTR Positions --- */
+/* Prev is Left, Next is Right */
+.controlPrev {
+  left: 1rem;
+  right: auto;
+}
+
+.controlNext {
+  right: 1rem;
+  left: auto;
+}
+
+/* --- Urdu / RTL Positions --- */
+/* Prev is Right (Start), Next is Left (End) */
+.controlPrevRtl {
+  right: 1rem;
+  left: auto; 
+}
+
+.controlNextRtl {
+  left: 1rem;
+  right: auto; 
+}
+
+/* --- Indicators --- */
+
+.indicators {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.45rem;
+  z-index: 10;
+  /* Keep indicators LTR so the logic matches the visual array */
+  direction: ltr; 
+}
+
+.indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: none;
+  background-color: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  padding: 0;
+}
+
+.indicatorActive {
+  background-color: white;
+}
+
+.emptyState {
+  width: 100%;
+  padding: 2rem;
+  text-align: center;
+  border: 1px dashed rgba(139, 115, 85, 0.4);
+  border-radius: 10px;
+  color: #8B7355;
+  background: rgba(139, 115, 85, 0.05);
+}
+
+/* Utility Classes */
+.rtl {
+  direction: rtl;
+}
+
+.ltr {
+  direction: ltr;
+}
+
+@media (max-width: 768px) {
+  .carousel {
+    height: 240px;
+  }
+
+  .control {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+
+  .caption {
+    padding: 1rem;
+  }
+
+  .caption h2 {
+    font-size: 1.1rem;
+  }
+
+  .caption p {
+    font-size: 0.85rem;
+  }
+}
+
+.control {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  
+  background-color: rgba(139, 115, 85, 0.85);
+  color: white;
+  border: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  
+  font-family: sans-serif, Arial; /* Prevent Urdu fonts from affecting height */
+  line-height: 1; /* Reset line height to prevent vertical shifting */
+  margin: 0; /* Reset margins */
+  padding: 0; /* strict padding */
+  
+  font-size: 1.2rem; 
   cursor: pointer;
   transition: background-color 0.3s ease;
   z-index: 10;
@@ -103,86 +255,24 @@
   outline-offset: 2px;
 }
 
+/* English / LTR Positions */
 .controlPrev {
-  left: 1rem;
-}
-
-.controlNext {
-  right: 1rem;
-}
-
-.controlPrevRtl {
-  right: 1rem;
-  left: auto;
-}
-
-.controlNextRtl {
   left: 1rem;
   right: auto;
 }
 
-.indicators {
-  position: absolute;
-  bottom: 1rem;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 0.45rem;
-  z-index: 10;
+.controlNext {
+  right: 1rem;
+  left: auto;
 }
 
-.indicator {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  border: none;
-  background-color: rgba(255, 255, 255, 0.55);
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+/* Urdu / RTL Positions */
+.controlPrevRtl {
+  right: 1rem;
+  left: auto; 
 }
 
-.indicatorActive {
-  background-color: white;
-}
-
-.emptyState {
-  width: 100%;
-  padding: 2rem;
-  text-align: center;
-  border: 1px dashed rgba(139, 115, 85, 0.4);
-  border-radius: 10px;
-  color: #8B7355;
-  background: rgba(139, 115, 85, 0.05);
-}
-
-.rtl {
-  direction: rtl;
-}
-
-.ltr {
-  direction: ltr;
-}
-
-@media (max-width: 768px) {
-  .carousel {
-    height: 240px;
-  }
-
-  .control {
-    width: 36px;
-    height: 36px;
-    font-size: 1.2rem;
-  }
-
-  .caption {
-    padding: 1rem;
-  }
-
-  .caption h2 {
-    font-size: 1.1rem;
-  }
-
-  .caption p {
-    font-size: 0.85rem;
-  }
+.controlNextRtl {
+  left: 1rem;
+  right: auto; 
 }
