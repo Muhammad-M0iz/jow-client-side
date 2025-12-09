@@ -223,12 +223,6 @@ export function Header({ menuItems, fetchError }: { menuItems: MenuItem[]; fetch
       <div className="top-bar">
         <div className="container">
           <div className="top-bar-content">
-            <button 
-  onClick={toggleLanguage}
-  className="lang-toggle"
->
-  {locale === 'en' ? 'اردو' : 'English'}
-</button>
             <div className="contact-info">
               <a href="tel:+923001234567" className="contact-item">
                 <span className="contact-icon">📞</span>
@@ -239,6 +233,14 @@ export function Header({ menuItems, fetchError }: { menuItems: MenuItem[]; fetch
                 <span className="contact-text">info@jamiaurwatulwusqa.com</span>
               </a>
             </div>
+            <button
+              onClick={toggleLanguage}
+              className="lang-toggle"
+              title={locale === 'en' ? 'Switch to Urdu' : 'اردو سے انگریزی میں تبدیل کریں'}
+              aria-label={locale === 'en' ? 'Switch to Urdu' : 'Switch to English'}
+            >
+              {locale === 'en' ? 'اردو' : 'English'}
+            </button>
           </div>
         </div>
       </div>
