@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, useRef, type ChangeEvent, type FormEvent } from 'react';
 import './FormSection.css';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_STRAPI_URL ?? 'http://localhost:1337';
@@ -107,13 +107,22 @@ const FormSection = ({ form, direction = 'ltr' }: FormSectionProps) => {
 
   const initialValues = useMemo(() => buildInitialValues(allFlatFields), [allFlatFields]);
 
-  // 3. State
-  const [currentStep, setCurrentStep] = useState(0);
+  // 3. State (added currentPage for section-based pagination)
+  const [currentPage, setCurrentPage] = useState(0);
   const [values, setValues] = useState<FormValues>(initialValues);
   const [fileValues, setFileValues] = useState<FileValues>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<SubmissionStatus>('idle');
   const [message, setMessage] = useState<string | null>(null);
+
+  // 4. Ref for scrolling
+  const formTopRef = useRef<HTMLElement>(null);
+
+  const scrollToFormTop = () => {
+    if (formTopRef.current) {
+      formTopRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   useEffect(() => {
     setValues(initialValues);
@@ -121,7 +130,7 @@ const FormSection = ({ form, direction = 'ltr' }: FormSectionProps) => {
     setErrors({});
     setStatus('idle');
     setMessage(null);
-    setCurrentStep(0);
+    setCurrentPage(0);
   }, [initialValues]);
 
   // --- Handlers ---
@@ -216,31 +225,35 @@ const FormSection = ({ form, direction = 'ltr' }: FormSectionProps) => {
     return nextErrors;
   };
 
-
-
-  // Update handleNext to accept the event
-  const handleNext = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault(); // <--- CRITICAL: Prevents form submission
+  const handleNext = (e?: React.MouseEvent<HTMLButtonElement>) => {
+    e?.preventDefault(); // Prevent any form submission
     setMessage(null);
     
-    const currentSectionFields = sections[currentStep]?.childFields || [];
-    const stepErrors = validateFields(currentSectionFields);
+    // Validate current page fields before moving to next
+    const currentSectionFields = sections[currentPage]?.childFields || [];
+    const pageErrors = validateFields(currentSectionFields);
     
-    if (Object.keys(stepErrors).length > 0) {
-      setErrors(stepErrors);
-      const firstErrorId = Object.keys(stepErrors)[0];
+    if (Object.keys(pageErrors).length > 0) {
+      setErrors(pageErrors);
+      const firstErrorId = Object.keys(pageErrors)[0];
       document.getElementById(firstErrorId)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
-
-    setCurrentStep(prev => Math.min(prev + 1, sections.length - 1));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Scroll to the top of the form section
+    scrollToFormTop();
+    
+    setCurrentPage(prev => Math.min(prev + 1, sections.length - 1));
   };
 
-  const handlePrev = () => {
+  const handlePrev = (e?: React.MouseEvent<HTMLButtonElement>) => {
+    e?.preventDefault(); // Prevent any form submission
     setMessage(null);
-    setCurrentStep(prev => Math.max(prev - 1, 0));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Scroll to the top of the form section
+    scrollToFormTop();
+    
+    setCurrentPage(prev => Math.max(prev - 1, 0));
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -251,7 +264,19 @@ const FormSection = ({ form, direction = 'ltr' }: FormSectionProps) => {
     if (Object.keys(allErrors).length > 0) {
       setErrors(allErrors);
       setStatus('error');
-      setMessage('Please fix the errors before submitting.');
+      setMessage('برائے مہربانی غلطیاں ٹھیک کریں۔ / Please fix the errors before submitting.');
+      
+      // Find which page has the first error and navigate to it
+      const firstErrorId = Object.keys(allErrors)[0];
+      const errorPageIndex = sections.findIndex(section => 
+        section.childFields?.some(field => field.id === firstErrorId)
+      );
+      if (errorPageIndex !== -1 && errorPageIndex !== currentPage) {
+        setCurrentPage(errorPageIndex);
+      }
+      setTimeout(() => {
+        document.getElementById(firstErrorId)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
       return;
     }
 
@@ -290,18 +315,32 @@ const FormSection = ({ form, direction = 'ltr' }: FormSectionProps) => {
         } else {
           throw new Error('Submission failed');
         }
+        
+        // Scroll to form top to show error message
+        setTimeout(() => {
+          scrollToFormTop();
+        }, 100);
         return;
       }
 
       setStatus('success');
-      setMessage('Thanks! Your response has been recorded.');
+      setMessage('شکریہ! آپ کا جواب محفوظ ہو گیا ہے۔ / Thanks! Your response has been recorded.');
       setValues(initialValues);
       setFileValues({});
       setErrors({});
-      setCurrentStep(0);
+      
+      // Scroll to form top to show success message
+      setTimeout(() => {
+        scrollToFormTop();
+      }, 100);
     } catch {
       setStatus('error');
-      setMessage('Unable to submit the form right now. Please try again.');
+      setMessage('فارم جمع نہیں ہو سکا، دوبارہ کوشش کریں۔ / Unable to submit the form right now. Please try again.');
+      
+      // Scroll to form top to show error message
+      setTimeout(() => {
+        scrollToFormTop();
+      }, 100);
     }
   };
 
@@ -321,7 +360,7 @@ const FormSection = ({ form, direction = 'ltr' }: FormSectionProps) => {
     const parts = template.split(/(\[.*?\])/g);
 
     return (
-      <div className="form-statement-container">
+      <div className="form-statement-container" key={field.id}>
         <div className="form-statement-text">
           {parts.map((part, index) => {
             const match = part.match(/^\[(.*?)\]$/);
@@ -333,14 +372,14 @@ const FormSection = ({ form, direction = 'ltr' }: FormSectionProps) => {
               if (childDef) {
                  // Render specific input based on child def
                  if (normalizeFieldType(childDef.type) === 'date') {
-                    return <input key={index} type="date" className="form-statement-inline-input" value={inputValue} onChange={e => handleStatementChange(variableName, e.target.value)} />
+                   return <input key={`${field.id}-stmt-${index}`} type="date" className="form-statement-inline-input" value={inputValue} onChange={e => handleStatementChange(variableName, e.target.value)} />
                  }
                  // Add other types as needed
               }
               
               return (
                 <input
-                  key={index}
+                  key={`${field.id}-stmt-${index}`}
                   type="text"
                   value={inputValue}
                   onChange={(e) => handleStatementChange(variableName, e.target.value)}
@@ -350,7 +389,7 @@ const FormSection = ({ form, direction = 'ltr' }: FormSectionProps) => {
                 />
               );
             }
-            return <span key={index}>{part}</span>;
+            return <span key={`${field.id}-stmt-span-${index}`}>{part}</span>;
           })}
         </div>
         {errorMessage && <p className="form-field-error">{errorMessage}</p>}
@@ -491,6 +530,170 @@ const FormSection = ({ form, direction = 'ltr' }: FormSectionProps) => {
     );
   };
 
+  // CNIC Character Boxes Renderer
+  const renderCNICField = (field: FormFieldDefinition) => {
+    const value = (values[field.id] as string) || '';
+    const errorMessage = errors[field.id];
+    
+    // Parse CNIC format: 12345-1234567-1
+    const parts = value.split('-');
+    const part1 = (parts[0] || '').padEnd(5, ' ').substring(0, 5).split('');
+    const part2 = (parts[1] || '').padEnd(7, ' ').substring(0, 7).split('');
+    const part3 = (parts[2] || '').padEnd(1, ' ').substring(0, 1).split('');
+    
+    const handleCNICChange = (partIndex: number, charIndex: number, newChar: string) => {
+      // Only allow digits
+      if (newChar && !/^\d$/.test(newChar)) return;
+      
+      const allParts = [part1, part2, part3];
+      allParts[partIndex][charIndex] = newChar;
+      
+      const newValue = `${allParts[0].join('').trim()}-${allParts[1].join('').trim()}-${allParts[2].join('').trim()}`;
+      handleTextChange(field.id, newValue);
+      
+      // Auto-focus next input
+      if (newChar && charIndex < allParts[partIndex].length - 1) {
+        const nextInput = document.querySelector(
+          `input[data-cnic-field="${field.id}"][data-part="${partIndex}"][data-index="${charIndex + 1}"]`
+        ) as HTMLInputElement;
+        nextInput?.focus();
+      } else if (newChar && charIndex === allParts[partIndex].length - 1 && partIndex < 2) {
+        const nextInput = document.querySelector(
+          `input[data-cnic-field="${field.id}"][data-part="${partIndex + 1}"][data-index="0"]`
+        ) as HTMLInputElement;
+        nextInput?.focus();
+      }
+    };
+    
+    const handleCNICKeyDown = (partIndex: number, charIndex: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+      const allParts = [part1, part2, part3];
+      const currentValue = (e.target as HTMLInputElement).value;
+      
+      // Backspace: Clear current and move to previous
+      if (e.key === 'Backspace') {
+        if (!currentValue || currentValue === ' ') {
+          // Move to previous box
+          e.preventDefault();
+          
+          if (charIndex > 0) {
+            const prevInput = document.querySelector(
+              `input[data-cnic-field="${field.id}"][data-part="${partIndex}"][data-index="${charIndex - 1}"]`
+            ) as HTMLInputElement;
+            prevInput?.focus();
+            // Clear the previous box
+            allParts[partIndex][charIndex - 1] = ' ';
+            const newValue = `${allParts[0].join('').trim()}-${allParts[1].join('').trim()}-${allParts[2].join('').trim()}`;
+            handleTextChange(field.id, newValue);
+          } else if (partIndex > 0) {
+            const prevPartLength = allParts[partIndex - 1].length;
+            const prevInput = document.querySelector(
+              `input[data-cnic-field="${field.id}"][data-part="${partIndex - 1}"][data-index="${prevPartLength - 1}"]`
+            ) as HTMLInputElement;
+            prevInput?.focus();
+            // Clear the previous box
+            allParts[partIndex - 1][prevPartLength - 1] = ' ';
+            const newValue = `${allParts[0].join('').trim()}-${allParts[1].join('').trim()}-${allParts[2].join('').trim()}`;
+            handleTextChange(field.id, newValue);
+          }
+        }
+      }
+      
+      // Arrow Left: Move to previous box
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        if (charIndex > 0) {
+          const prevInput = document.querySelector(
+            `input[data-cnic-field="${field.id}"][data-part="${partIndex}"][data-index="${charIndex - 1}"]`
+          ) as HTMLInputElement;
+          prevInput?.focus();
+        } else if (partIndex > 0) {
+          const prevPartLength = allParts[partIndex - 1].length;
+          const prevInput = document.querySelector(
+            `input[data-cnic-field="${field.id}"][data-part="${partIndex - 1}"][data-index="${prevPartLength - 1}"]`
+          ) as HTMLInputElement;
+          prevInput?.focus();
+        }
+      }
+      
+      // Arrow Right: Move to next box
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        if (charIndex < allParts[partIndex].length - 1) {
+          const nextInput = document.querySelector(
+            `input[data-cnic-field="${field.id}"][data-part="${partIndex}"][data-index="${charIndex + 1}"]`
+          ) as HTMLInputElement;
+          nextInput?.focus();
+        } else if (partIndex < 2) {
+          const nextInput = document.querySelector(
+            `input[data-cnic-field="${field.id}"][data-part="${partIndex + 1}"][data-index="0"]`
+          ) as HTMLInputElement;
+          nextInput?.focus();
+        }
+      }
+    };
+    
+    return (
+      <div key={field.id} className="form-field">
+        <label>
+          {field.label || field.id} {field.required && <span className="required-star">*</span>}
+        </label>
+        <div className="cnic-input-container">
+          <div className="cnic-boxes-group">
+            {part1.map((char, idx) => (
+              <input
+                key={`p1-${idx}`}
+                type="text"
+                maxLength={1}
+                value={char.trim()}
+                onChange={e => handleCNICChange(0, idx, e.target.value)}
+                onKeyDown={e => handleCNICKeyDown(0, idx, e)}
+                className="cnic-char-box"
+                data-cnic-field={field.id}
+                data-part="0"
+                data-index={idx}
+              />
+            ))}
+          </div>
+          <span className="cnic-separator">-</span>
+          <div className="cnic-boxes-group">
+            {part2.map((char, idx) => (
+              <input
+                key={`p2-${idx}`}
+                type="text"
+                maxLength={1}
+                value={char.trim()}
+                onChange={e => handleCNICChange(1, idx, e.target.value)}
+                onKeyDown={e => handleCNICKeyDown(1, idx, e)}
+                className="cnic-char-box"
+                data-cnic-field={field.id}
+                data-part="1"
+                data-index={idx}
+              />
+            ))}
+          </div>
+          <span className="cnic-separator">-</span>
+          <div className="cnic-boxes-group">
+            {part3.map((char, idx) => (
+              <input
+                key={`p3-${idx}`}
+                type="text"
+                maxLength={1}
+                value={char.trim()}
+                onChange={e => handleCNICChange(2, idx, e.target.value)}
+                onKeyDown={e => handleCNICKeyDown(2, idx, e)}
+                className="cnic-char-box"
+                data-cnic-field={field.id}
+                data-part="2"
+                data-index={idx}
+              />
+            ))}
+          </div>
+        </div>
+        {errorMessage && <p className="form-field-error">{errorMessage}</p>}
+      </div>
+    );
+  };
+
   const renderField = (field: FormFieldDefinition) => {
     const type = normalizeFieldType(field.type);
     const errorMessage = errors[field.id];
@@ -498,10 +701,11 @@ const FormSection = ({ form, direction = 'ltr' }: FormSectionProps) => {
 
     if (type === 'statement') return renderStatementField(field);
     if (type === 'repeater') return renderRepeaterField(field);
+    if (type === 'cnic') return renderCNICField(field);
 
     // Standard Render Logic
     return (
-      <div key={field.id} className={`form-field ${errorMessage ? 'has-error' : ''}`}>
+      <div key={field.id} className={`form-field ${type === 'textarea' ? 'textarea-field' : ''} ${errorMessage ? 'has-error' : ''}`}>
         {type !== 'boolean' && (
           <label htmlFor={field.id}>
             {field.label || field.id} {field.required && <span className="required-star">*</span>}
@@ -517,10 +721,15 @@ const FormSection = ({ form, direction = 'ltr' }: FormSectionProps) => {
              className="form-textarea"
            />
         ) : type === 'boolean' ? (
-           <label className="checkbox-label">
-             <input type="checkbox" checked={!!value} onChange={e => handleTextChange(field.id, e.target.checked)} />
-             {field.label}
-           </label>
+           <div className="single-checkbox-container">
+             <input 
+               type="checkbox" 
+               id={field.id}
+               checked={!!value} 
+               onChange={e => handleTextChange(field.id, e.target.checked)} 
+             />
+             <label htmlFor={field.id}>{field.label}</label>
+           </div>
         ) : type === 'select' ? (
            <select 
              id={field.id} 
@@ -531,33 +740,47 @@ const FormSection = ({ form, direction = 'ltr' }: FormSectionProps) => {
              <option value="">Select...</option>
              {normalizeOptions(field).map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
            </select>
-        )
-        : type === 'multiselect' ? (
-  <div className="checkbox-group">
-    {normalizeOptions(field).map((opt) => (
-      <label key={opt.value} className="checkbox-label">
-        <input
-          type="checkbox"
-          checked={(value as string[] || []).includes(opt.value)}
-          onChange={(e) => {
-            const currentValues = (Array.isArray(value) ? value : []) as string[];
-            
-            if (e.target.checked) {
-              handleTextChange(field.id, [...currentValues, opt.value]);
-            } else {
-              handleTextChange(field.id, currentValues.filter((v) => v !== opt.value));
-            }
-          }}
-        />
-        <span className="checkbox-text">{opt.label}</span>
-      </label>
-    ))}
-  </div>)
-         : type === 'upload' ? (
+        ) : type === 'radio' ? (
+           <div className="radio-group">
+             {normalizeOptions(field).map((opt) => (
+               <label key={opt.value} className="radio-label">
+                 <input
+                   type="radio"
+                   name={field.id}
+                   value={opt.value}
+                   checked={value === opt.value}
+                   onChange={(e) => handleTextChange(field.id, e.target.value)}
+                 />
+                 {opt.label}
+               </label>
+             ))}
+           </div>
+        ) : type === 'multiselect' ? (
+           <div className="checkbox-group">
+             {normalizeOptions(field).map((opt) => (
+               <label key={opt.value} className="checkbox-label">
+                 <input
+                   type="checkbox"
+                   checked={(value as string[] || []).includes(opt.value)}
+                   onChange={(e) => {
+                     const currentValues = (Array.isArray(value) ? value : []) as string[];
+                     
+                     if (e.target.checked) {
+                       handleTextChange(field.id, [...currentValues, opt.value]);
+                     } else {
+                       handleTextChange(field.id, currentValues.filter((v) => v !== opt.value));
+                     }
+                   }}
+                 />
+                 <span className="checkbox-text">{opt.label}</span>
+               </label>
+             ))}
+           </div>
+        ) : type === 'upload' ? (
            <input type="file" onChange={e => handleFileChange(field.id, e.target.files)} className="form-input" />
         ) : (
            <input 
-             type={type === 'cnic' ? 'text' : type} 
+             type={type} 
              id={field.id} 
              value={value as string || ''} 
              onChange={e => handleTextChange(field.id, e.target.value)} 
@@ -571,96 +794,93 @@ const FormSection = ({ form, direction = 'ltr' }: FormSectionProps) => {
     );
   };
 
-  // --- Main Render ---
+  // --- Main Render - Paginated Paper Form ---
   if (!sections.length) return null;
 
-  const activeSection = sections[currentStep];
-  const isFirstStep = currentStep === 0;
-  const isLastStep = currentStep === sections.length - 1;
+  const currentSection = sections[currentPage];
+  const isFirstPage = currentPage === 0;
+  const isLastPage = currentPage === sections.length - 1;
+  const totalPages = sections.length;
 
   return (
-    <section className="form-wizard-section" dir={direction}>
+    <section className="form-wizard-section" dir={direction} ref={formTopRef}>
       <div className="form-wizard-card">
         
         <div className="form-header">
            <h1 className="form-title">{form.name}</h1>
-           <p className="form-description">Comprehensive admission form for Jamia Urwaa.</p>
+           {form.slug && <p className="form-description">{form.slug}</p>}
         </div>
 
-        {/* --- UPDATED STEPPER --- */}
-        <div className="form-stepper">
-           {sections.map((section, index) => {
-             const isCompleted = index < currentStep;
-             const isCurrent = index === currentStep;
-             
-             return (
-               <div 
-                 key={section.id} 
-                 className={`step-item ${isCompleted ? 'completed' : ''} ${isCurrent ? 'current' : ''}`}
-               >
-                  <div className="step-indicator">
-                    <div className="step-circle">
-                      {isCompleted ? (
-                        /* Checkmark icon for completed steps */
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                      ) : (
-                        index + 1
-                      )}
-                    </div>
-                    <span className="step-label">{section.label}</span>
-                  </div>
-                  {/* Connector Line (except for the last item) */}
-                  {index < sections.length - 1 && (
-                    <div className={`step-connector ${isCompleted ? 'active' : ''}`} />
-                  )}
-               </div>
-             );
-           })}
+        {/* Page indicator */}
+        <div className="page-indicator">
+          <span className="page-number">صفحہ {currentPage + 1} از {totalPages} / Page {currentPage + 1} of {totalPages}</span>
+          <div className="page-dots">
+            {sections.map((_, index) => (
+              <button
+                key={index}
+                type="button"
+                className={`page-dot ${index === currentPage ? 'active' : ''} ${index < currentPage ? 'completed' : ''}`}
+                onClick={(e) => {
+                  e.preventDefault(); // Prevent any form submission
+                  setCurrentPage(index);
+                  scrollToFormTop();
+                }}
+                aria-label={`Go to page ${index + 1}`}
+              />
+            ))}
+          </div>
         </div>
 
-        <form className="form-step-content" onSubmit={handleSubmit} noValidate onKeyDown={(e) => {
-            if (e.key === 'Enter' && !isLastStep && e.target instanceof HTMLInputElement) {
+        <form 
+          className="form-step-content" 
+          onSubmit={handleSubmit} 
+          noValidate
+          onKeyDown={(e) => {
+            // Prevent Enter key from submitting the form
+            if (e.key === 'Enter' && e.target instanceof HTMLInputElement && e.target.type !== 'submit') {
               e.preventDefault();
             }
-          }}>
-           <h2 className="step-title">{activeSection.label}</h2>
-           {activeSection.description && <p className="step-desc">{activeSection.description}</p>}
-           
-           <div className="step-fields-grid">
-              {(activeSection.childFields || []).map(field => renderField(field))}
+          }}
+        >
+           {/* Render only current section */}
+           <div className="form-section-block">
+             <h2 className="step-title">{currentSection.label}</h2>
+             {currentSection.description && <p className="step-desc">{currentSection.description}</p>}
+             
+             <div className="step-fields-grid">
+                {(currentSection.childFields || []).map(field => renderField(field))}
+             </div>
            </div>
 
            {message && (
              <div className={`form-message ${status}`}>{message}</div>
            )}
+           
            <div className="form-footer">
               <button 
                 type="button" 
                 className="btn-prev" 
                 onClick={handlePrev} 
-                disabled={isFirstStep}
+                disabled={isFirstPage}
               >
-                PREVIOUS
+                ← پچھلا / PREVIOUS
               </button>
 
-              {/* Render strictly based on state */}
-              {isLastStep ? (
+              {isLastPage ? (
                 <button 
                   type="submit" 
-                  className="btn-next btn-submit"
+                  className="btn-submit"
                   disabled={status === 'submitting'}
                 >
-                  {status === 'submitting' ? 'SUBMITTING...' : 'SUBMIT'}
+                  {status === 'submitting' ? 'جمع کروائیں...' : 'جمع کروائیں / SUBMIT'}
                 </button>
               ) : (
                 <button 
-                  type="button" // Explicitly type button
+                  type="button" 
                   className="btn-next" 
-                  onClick={handleNext} // Pass the function
+                  onClick={handleNext}
                 >
-                  NEXT
+                  اگلا / NEXT →
                 </button>
               )}
            </div>
