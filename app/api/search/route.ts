@@ -132,6 +132,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Query is required' }, { status: 400 });
   }
 
+
+  const hasValidChars = /[\p{L}]/u.test(query);
+
+  if (!hasValidChars) {
+    return NextResponse.json({
+      query,
+      limit,
+      offset,
+      host: meiliHost,
+      results: [], 
+    });
+  }
+
   return executeSearch(query, limit, offset);
 }
 
@@ -143,6 +156,18 @@ export async function GET(request: NextRequest) {
 
   if (!query) {
     return NextResponse.json({ error: 'Query is required' }, { status: 400 });
+  }
+
+const hasValidChars = /[\p{L}]/u.test(query);
+
+  if (!hasValidChars) {
+    return NextResponse.json({
+      query,
+      limit,
+      offset,
+      host: meiliHost,
+      results: [], 
+    });
   }
 
   return executeSearch(query, Math.min(Math.max(limit, 1), 50), Math.max(offset, 0));

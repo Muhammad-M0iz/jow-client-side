@@ -314,7 +314,7 @@ export default async function HomePage() {
                   </div>
                 );
               })}
-              <Link href="/media-events/photo-gallery" className="collage-item collage-more-btn">
+              <Link href="/photo-gallery" className="collage-item collage-more-btn">
                 <div className="collage-more-content">
                   <div className="more-icon">📸</div>
                   <h3 className="more-title">{text.galleryCtaTitle}</h3>
