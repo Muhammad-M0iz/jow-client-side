@@ -48,7 +48,7 @@ const copy: Record<LocaleKey, {
     announcementLinkLabel: 'View details',
     noAnnouncements: 'Nothing to share right now.',
     eventsCalendarTitle: 'Events Calendar',
-    eventsListTitle: 'Events',
+    eventsListTitle: 'Upcoming Events',
     noEvents: 'No events scheduled yet.',
   },
   ur: {

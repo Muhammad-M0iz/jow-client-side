@@ -136,6 +136,8 @@
 .content-body ol {
   margin: 1rem 0;
   list-style: none;
+  
+  /* FIX: Padding on the "start" side (Left for EN, Right for UR) */
   padding-inline-start: 1.5rem;
 }
 
@@ -143,15 +145,20 @@
   margin-bottom: 0.25rem;
   line-height: 1.7;
   position: relative;
+  
+  /* FIX: Space for the bullet point */
   padding-inline-start: 1.5rem;
 }
 
+/* Unordered List Bullets */
 .content-body ul li::before {
   content: '';
   position: absolute;
   
+  /* FIX: Position dot at the start */
   inset-inline-start: 0; 
   top: 0.6rem; /* Adjusted for alignment */
+  
   width: 0.55rem;
   height: 0.55rem;
   border-radius: 50%;

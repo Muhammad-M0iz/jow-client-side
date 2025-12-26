@@ -25,7 +25,8 @@ export type PhotoAlbumSectionData = {
 };
 
 type LightboxState = {
-  photo: PhotoMediaItem;
+  photos: PhotoMediaItem[];
+  currentIndex: number;
   albumTitle?: string | null;
   albumDescription?: string | null;
 };
@@ -52,6 +53,16 @@ export default function PhotoAlbumSection({ section, direction = 'ltr' }: PhotoA
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setLightbox(null);
+      } else if (event.key === 'ArrowLeft') {
+        setLightbox((prev) => {
+          if (!prev) return null;
+          return { ...prev, currentIndex: (prev.currentIndex - 1 + prev.photos.length) % prev.photos.length };
+        });
+      } else if (event.key === 'ArrowRight') {
+        setLightbox((prev) => {
+          if (!prev) return null;
+          return { ...prev, currentIndex: (prev.currentIndex + 1) % prev.photos.length };
+        });
       }
     };
     document.addEventListener('keydown', handleKeyDown);
@@ -68,6 +79,28 @@ export default function PhotoAlbumSection({ section, direction = 'ltr' }: PhotoA
     }
   };
 
+  const handlePrev = (e: ReactMouseEvent) => {
+    e.stopPropagation();
+    setLightbox((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        currentIndex: (prev.currentIndex - 1 + prev.photos.length) % prev.photos.length,
+      };
+    });
+  };
+
+  const handleNext = (e: ReactMouseEvent) => {
+    e.stopPropagation();
+    setLightbox((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        currentIndex: (prev.currentIndex + 1) % prev.photos.length,
+      };
+    });
+  };
+
   return (
     <section className="photo-album-section" dir={direction}>
       {section.title ? <h2 className="photo-album-section__title">{section.title}</h2> : null}
@@ -80,12 +113,19 @@ export default function PhotoAlbumSection({ section, direction = 'ltr' }: PhotoA
           </header>
 
           <div className="photo-grid">
-            {album.photos.map((photo) => (
+            {album.photos.map((photo, index) => (
               <button
                 type="button"
                 key={photo.id}
                 className="photo-grid__item"
-                onClick={() => setLightbox({ photo, albumTitle: album.title, albumDescription: album.description })}
+                onClick={() =>
+                  setLightbox({
+                    photos: album.photos,
+                    currentIndex: index,
+                    albumTitle: album.title,
+                    albumDescription: album.description,
+                  })
+                }
                 aria-label={photo.caption ?? photo.alt ?? album.title ?? 'View photo'}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -102,12 +142,38 @@ export default function PhotoAlbumSection({ section, direction = 'ltr' }: PhotoA
             <button type="button" className="photo-lightbox__close" aria-label="Close" onClick={() => setLightbox(null)}>
               ×
             </button>
+
+            {lightbox.photos.length > 1 && (
+              <>
+                <button type="button" className="photo-lightbox__nav photo-lightbox__nav--prev" aria-label="Previous photo" onClick={handlePrev}>
+                  ‹
+                </button>
+                <button type="button" className="photo-lightbox__nav photo-lightbox__nav--next" aria-label="Next photo" onClick={handleNext}>
+                  ›
+                </button>
+              </>
+            )}
+
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className="photo-lightbox__image" src={lightbox.photo.url} alt={lightbox.photo.alt ?? lightbox.photo.caption ?? lightbox.albumTitle ?? 'Photo'} />
+            <img
+              className="photo-lightbox__image"
+              src={lightbox.photos[lightbox.currentIndex].url}
+              alt={
+                lightbox.photos[lightbox.currentIndex].alt ??
+                lightbox.photos[lightbox.currentIndex].caption ??
+                lightbox.albumTitle ??
+                'Photo'
+              }
+            />
             <div className="photo-lightbox__meta">
               {lightbox.albumTitle ? <h4>{lightbox.albumTitle}</h4> : null}
-              {lightbox.photo.caption ? <p>{lightbox.photo.caption}</p> : null}
-              {!lightbox.photo.caption && lightbox.albumDescription ? <p>{lightbox.albumDescription}</p> : null}
+              {lightbox.photos[lightbox.currentIndex].caption ? <p>{lightbox.photos[lightbox.currentIndex].caption}</p> : null}
+              {!lightbox.photos[lightbox.currentIndex].caption && lightbox.albumDescription ? <p>{lightbox.albumDescription}</p> : null}
+              {lightbox.photos.length > 1 && (
+                <p className="photo-lightbox__counter">
+                  {lightbox.currentIndex + 1} / {lightbox.photos.length}
+                </p>
+              )}
             </div>
           </div>
         </div>

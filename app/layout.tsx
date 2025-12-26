@@ -6,6 +6,8 @@ import Footer from "./components/Footer";
 import { getFooter } from "./lib/footer";
 import { LanguageProvider } from "./context/LanguageContext"; // Import Provider
 import { getServerLocale } from "./lib/get-locale"; // Import Helper
+import Script from "next/script";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -37,6 +39,13 @@ export default async function RootLayout({
 
   return (
     <html lang={locale}>
+      <head>
+          <Script
+            src="//unpkg.com/react-grab/dist/index.global.js"
+            crossOrigin="anonymous"
+            strategy="beforeInteractive"
+          />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${notoNastaliq.variable} antialiased`}
       >
