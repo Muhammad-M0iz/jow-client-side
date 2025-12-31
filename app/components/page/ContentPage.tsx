@@ -12,6 +12,7 @@ import VideoSection, { type VideoSectionData } from './VideoSection';
 import PhotoAlbumSection, { type PhotoAlbumSectionData } from './PhotoAlbumSection';
 import DownloadSection, { type DownloadSectionData } from './DownloadSection';
 import TestimonialsSection, { type TestimonialsSectionData } from './TestimonialsSection';
+import TableSection, { type TableSectionData } from './TableSection';
 import FormSection, { type FormSectionData } from './FormSection';
 import EventsCalendarSection from './EventsCalendarSection';
 import EventDetailSection from './EventDetailSection';
@@ -159,6 +160,7 @@ export type ContentPageProps = {
   photoAlbumSections?: PhotoAlbumSectionData[];
   downloadSections?: DownloadSectionData[];
   testimonialsSections?: TestimonialsSectionData[];
+  tableSections?: TableSectionData[];
   forms?: FormSectionData[];
   eventsWidget?: EventsCalendarData | null;
 };
@@ -433,6 +435,7 @@ export default function ContentPage({
   photoAlbumSections = [],
   downloadSections = [],
   testimonialsSections = [],
+  tableSections = [],
   forms = [],
   eventsWidget,
   eventDetailSection,
@@ -510,6 +513,12 @@ export default function ContentPage({
           {testimonialsSections.length
             ? testimonialsSections.map((section) => (
                 <TestimonialsSection key={section.id} section={section} direction={direction} />
+              ))
+            : null}
+
+          {tableSections.length
+            ? tableSections.map((section) => (
+                <TableSection key={section.id} section={section} direction={direction} />
               ))
             : null}
 

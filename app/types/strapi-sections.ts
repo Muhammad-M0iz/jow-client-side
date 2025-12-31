@@ -266,6 +266,21 @@ export type TestimonialsSection = DynamicSection & {
   testimonials?: TestimonialEntry[];
 };
 
+export type TableColumn = {
+  type?: string | null;
+  label?: string | null;
+  required?: boolean | null;
+};
+
+export type TableSection = DynamicSection & {
+  __component: 'page-sections.table';
+  title?: string | null;
+  Table?: {
+    rows?: string[][] | null;
+    columns?: TableColumn[] | null;
+  } | null;
+};
+
 export type EventsWidgetEntry = {
   id?: number;
   documentId?: string;

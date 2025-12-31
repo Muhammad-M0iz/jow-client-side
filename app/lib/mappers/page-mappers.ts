@@ -17,6 +17,7 @@ import type {
   PhotoAlbumWidgetSection,
   DownloadSection,
   TestimonialsSection,
+  TableSection,
   EventsWidgetSection,
   PageFormEntry,
   PageFormFieldEntry,
@@ -89,6 +90,9 @@ const isDownloadSection = (section: unknown): section is DownloadSection =>
 
 const isTestimonialsSection = (section: unknown): section is TestimonialsSection =>
   Boolean(section && typeof section === 'object' && (section as { __component?: string }).__component === 'page-sections.testimonials-widget');
+
+const isTableSection = (section: unknown): section is TableSection =>
+  Boolean(section && typeof section === 'object' && (section as { __component?: string }).__component === 'page-sections.table');
 
 const isEventsWidgetSection = (section: unknown): section is EventsWidgetSection =>
   Boolean(section && typeof section === 'object' && (section as { __component?: string }).__component === 'home-page-widgets.events-widget');
@@ -470,6 +474,30 @@ const mapTestimonialsSections = (sections: TestimonialsSection[]): ContentPagePr
     return acc;
   }, [] as NonNullable<ContentPageProps['testimonialsSections']>);
 
+const mapTableSections = (sections: TableSection[]): ContentPageProps['tableSections'] =>
+  sections.reduce((acc, section, sectionIndex) => {
+    if (!section.Table) {
+      return acc;
+    }
+
+    const rows = Array.isArray(section.Table.rows) ? section.Table.rows : [];
+    const columns = Array.isArray(section.Table.columns) ? section.Table.columns : [];
+
+    if (!rows.length || !columns.length) {
+      return acc;
+    }
+
+    acc.push({
+      id: section.id ?? `table-section-${sectionIndex}`,
+      title: section.title ?? null,
+      Table: {
+        rows,
+        columns,
+      },
+    });
+    return acc;
+  }, [] as NonNullable<ContentPageProps['tableSections']>);
+
 const mapEventsWidget = (sections: EventsWidgetSection[]): EventsCalendarData | null => {
   if (!sections.length) {
     return null;
@@ -656,6 +684,7 @@ export const mapContentPage = (page: PageEntry, requestedLocale: LocaleKey): Con
   const photoAlbumSectionsRaw = sections.filter(isPhotoAlbumSection);
   const downloadSectionsRaw = sections.filter(isDownloadSection);
   const testimonialsSectionsRaw = sections.filter(isTestimonialsSection);
+  const tableSectionsRaw = sections.filter(isTableSection);
   const eventsWidgetSections = sections.filter(isEventsWidgetSection);
 
   const featuredImage = mapFeaturedImage(featuredImageSection);
@@ -676,6 +705,7 @@ export const mapContentPage = (page: PageEntry, requestedLocale: LocaleKey): Con
   const photoAlbumSections = mapPhotoAlbumSections(photoAlbumSectionsRaw);
   const downloadSections = mapDownloadSections(downloadSectionsRaw);
   const testimonialsSections = mapTestimonialsSections(testimonialsSectionsRaw);
+  const tableSections = mapTableSections(tableSectionsRaw);
   const formSections = mapForms(page.forms);
   const eventsWidget = mapEventsWidget(eventsWidgetSections);
   const eventDetailSection = buildEventDetailSection(eventsWidget);
@@ -693,13 +723,14 @@ export const mapContentPage = (page: PageEntry, requestedLocale: LocaleKey): Con
     quickLinksTitle,
     facultyWidget,
     newsWidget,
-    newsDetailSection,
     videoSections,
     photoAlbumSections,
     downloadSections,
     testimonialsSections,
+    tableSections,
     forms: formSections,
     eventsWidget,
+    newsDetailSection,
     eventDetailSection,
   };
 
